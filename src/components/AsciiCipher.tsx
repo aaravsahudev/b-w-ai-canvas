@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 
-const CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()_+-=[]{}|;:',.<>?/~`";
+const CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*<>?/|";
 
 interface AsciiCipherProps {
   text: string;
@@ -27,23 +27,15 @@ const AsciiCipher = ({ text, isActive, onComplete }: AsciiCipherProps) => {
         onComplete?.();
         return;
       }
-
       setDisplay(
-        text
-          .split("")
-          .map(() => CHARS[Math.floor(Math.random() * CHARS.length)])
-          .join("")
+        text.split("").map(() => CHARS[Math.floor(Math.random() * CHARS.length)]).join("")
       );
     }, 16);
 
     return () => clearInterval(interval);
   }, [isActive, text, onComplete]);
 
-  return (
-    <span className={`font-mono ${isActive ? "animate-cipher" : ""}`}>
-      {display}
-    </span>
-  );
+  return <span className={`font-mono ${isActive ? "animate-cipher" : ""}`}>{display}</span>;
 };
 
 export default AsciiCipher;

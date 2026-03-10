@@ -6,7 +6,7 @@ const Footer = () => {
       <div className="max-w-7xl mx-auto">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-12 mb-16">
           <div className="md:col-span-1">
-            <img src={logo} alt="QuickWebStack" className="h-5 mb-6" />
+            <img src={logo} alt="QuickWebStack" className="h-8 mb-6" />
             <p className="font-mono text-xs text-muted-foreground leading-relaxed">
               Next-generation AI platform for creators, developers, and power users.
             </p>

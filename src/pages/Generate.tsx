@@ -3,10 +3,7 @@ import { useNavigate } from "react-router-dom";
 import {
   Send,
   Plus,
-  FileText,
-  Image,
   Code,
-  Music,
   MessageSquare,
   Settings,
   ChevronDown,
@@ -16,12 +13,13 @@ import {
   Trash2,
   ArrowLeft,
   Sparkles,
+  Check,
 } from "lucide-react";
 import logo from "@/assets/logo.png";
 
 const CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*<>?";
 
-type GenerationType = "text" | "image" | "code" | "audio";
+type GenerationType = "code";
 type Message = {
   id: string;
   role: "user" | "assistant";
@@ -38,32 +36,27 @@ type Conversation = {
 };
 
 const MODELS: Record<GenerationType, string[]> = {
-  text: ["QWS-Ultra-v4", "QWS-Fast-v3", "QWS-Creative-v2"],
-  image: ["QWS-Vision-v3", "QWS-Pixel-v2", "QWS-Art-v1"],
-  code: ["QWS-Code-v4", "QWS-Debug-v2", "QWS-Architect-v1"],
-  audio: ["QWS-Audio-v2", "QWS-Voice-v1", "QWS-Music-v1"],
+  code: [
+    "QWS-Code-v4-Pro",
+    "QWS-Code-v4",
+    "QWS-Code-v3-Advanced",
+    "QWS-Architect-v2",
+    "QWS-Debug-v3",
+    "QWS-Frontend-v2",
+    "QWS-Backend-v2",
+    "QWS-API-Design-v1",
+  ],
 };
 
-const TYPE_ICONS: Record<GenerationType, typeof FileText> = {
-  text: FileText,
-  image: Image,
+const TYPE_ICONS: Record<GenerationType, typeof Code> = {
   code: Code,
-  audio: Music,
 };
 
 const SAMPLE_RESPONSES: Record<GenerationType, string[]> = {
-  text: [
-    "The architecture of modern neural networks draws from decades of mathematical innovation. At their core, transformers leverage self-attention mechanisms to process sequential data in parallel — a breakthrough that fundamentally changed how we approach language understanding.\n\nKey developments include:\n• Multi-head attention for capturing diverse contextual relationships\n• Layer normalization for training stability\n• Residual connections enabling deeper architectures\n• Positional encodings for sequence-aware processing\n\nThese components work in concert to produce outputs that exhibit remarkable coherence and contextual awareness across extended sequences.",
-    "QuickWebStack's generation pipeline processes your request through a multi-stage inference system:\n\n1. TOKENIZATION — Your input is decomposed into subword units using byte-pair encoding, producing an average of 1.3 tokens per word.\n\n2. EMBEDDING — Tokens are mapped to 2048-dimensional vectors in a learned semantic space.\n\n3. INFERENCE — The transformer stack processes embeddings through 96 attention layers with 16,384 hidden dimensions.\n\n4. DECODING — Output probabilities are sampled using nucleus sampling (top-p=0.95) with temperature scaling for controlled creativity.\n\nTotal pipeline latency: 23ms on average.",
-  ],
-  image: [
-    "IMAGE GENERATED SUCCESSFULLY\n\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n┃                               ┃\n┃    ┌─────────────────────┐    ┃\n┃    │                     │    ┃\n┃    │   [Generated Image] │    ┃\n┃    │    1024 × 1024px     │    ┃\n┃    │    Format: PNG       │    ┃\n┃    │    Size: 2.4 MB      │    ┃\n┃    │                     │    ┃\n┃    └─────────────────────┘    ┃\n┃                               ┃\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\nModel: QWS-Vision-v3\nSteps: 50 | Guidance: 7.5\nSeed: 847291035\nTime: 3.2s",
-  ],
   code: [
     '```typescript\n// QuickWebStack API Client\nimport { QWSClient } from \'@quickwebstack/sdk\';\n\nconst client = new QWSClient({\n  apiKey: process.env.QWS_API_KEY,\n  model: \'qws-code-v4\',\n  timeout: 30000,\n});\n\nasync function generateCode(prompt: string) {\n  const response = await client.generate({\n    prompt,\n    maxTokens: 4096,\n    temperature: 0.3,\n    language: \'typescript\',\n  });\n\n  return {\n    code: response.output,\n    tokens: response.usage.totalTokens,\n    latency: response.metrics.latencyMs,\n  };\n}\n\n// Usage\nconst result = await generateCode(\n  "Create a REST API with authentication"\n);\nconsole.log(result.code);\n```\n\n✓ Syntax validated\n✓ Type-checked\n✓ 0 errors, 0 warnings\n\nTokens used: 847 | Latency: 18ms',
-  ],
-  audio: [
-    "AUDIO GENERATION COMPLETE\n\n━━━━ WAVEFORM ━━━━━━━━━━━━━━━━━\n╭──────────────────────────────╮\n│ ▁▂▃▅▇█▇▅▃▂▁▂▃▅▇█▇▅▃▂▁▂▃▅▇  │\n│ █▇▅▃▂▁▂▃▅▇█▇▅▃▂▁▁▂▃▅▇█▇▅▃  │\n╰──────────────────────────────╯\n\nFormat: WAV (44.1kHz, 16-bit)\nDuration: 00:32\nSize: 5.2 MB\nBPM: 120\nKey: C Minor\n\nModel: QWS-Music-v1\nLatency: 4.8s",
+    '```javascript\n// Express.js REST API with Authentication\nimport express from "express";\nimport jwt from "jsonwebtoken";\nimport bcrypt from "bcrypt";\n\nconst app = express();\nconst SECRET_KEY = process.env.SECRET_KEY || "your-secret-key";\n\nconst users = [];\n\n// Middleware\napp.use(express.json());\n\nconst authenticateToken = (req, res, next) => {\n  const authHeader = req.headers["authorization"];\n  const token = authHeader && authHeader.split(" ")[1];\n\n  if (!token) return res.sendStatus(401);\n\n  jwt.verify(token, SECRET_KEY, (err, user) => {\n    if (err) return res.sendStatus(403);\n    req.user = user;\n    next();\n  });\n};\n\n// Routes\napp.post("/auth/register", async (req, res) => {\n  const { username, password } = req.body;\n  const hashedPassword = await bcrypt.hash(password, 10);\n  users.push({ username, password: hashedPassword });\n  res.status(201).json({ message: "User registered" });\n});\n\napp.post("/auth/login", async (req, res) => {\n  const { username, password } = req.body;\n  const user = users.find(u => u.username === username);\n  \n  if (!user) return res.status(400).json({ message: "User not found" });\n  \n  const isValid = await bcrypt.compare(password, user.password);\n  if (!isValid) return res.status(400).json({ message: "Invalid password" });\n  \n  const token = jwt.sign({ username }, SECRET_KEY, { expiresIn: "1h" });\n  res.json({ token });\n});\n\napp.get("/protected", authenticateToken, (req, res) => {\n  res.json({ message: `Hello ${req.user.username}` });\n});\n\napp.listen(3000, () => console.log("Server running on port 3000"));\n```\n\n✓ Successfully compiled\n✓ Dependencies resolved\n✓ 0 errors\n\nTokens used: 1,247 | Latency: 24ms',
+    '```python\n# FastAPI with SQLAlchemy ORM\nfrom fastapi import FastAPI, Depends, HTTPException\nfrom sqlalchemy import create_engine, Column, Integer, String\nfrom sqlalchemy.ext.declarative import declarative_base\nfrom sqlalchemy.orm import sessionmaker, Session\nfrom pydantic import BaseModel\nfrom typing import List\n\nDATABASE_URL = "sqlite:///./test.db"\nengine = create_engine(DATABASE_URL)\nSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)\nBase = declarative_base()\n\napp = FastAPI()\n\nclass User(Base):\n    __tablename__ = "users"\n    id = Column(Integer, primary_key=True)\n    username = Column(String, unique=True)\n    email = Column(String, unique=True)\n\nBase.metadata.create_all(bind=engine)\n\nclass UserSchema(BaseModel):\n    username: str\n    email: str\n    \n    class Config:\n        from_attributes = True\n\ndef get_db():\n    db = SessionLocal()\n    try:\n        yield db\n    finally:\n        db.close()\n\n@app.post("/users/", response_model=UserSchema)\ndef create_user(user: UserSchema, db: Session = Depends(get_db)):\n    db_user = User(**user.dict())\n    db.add(db_user)\n    db.commit()\n    db.refresh(db_user)\n    return db_user\n\n@app.get("/users/", response_model=List[UserSchema])\ndef read_users(db: Session = Depends(get_db)):\n    return db.query(User).all()\n\nif __name__ == "__main__":\n    import uvicorn\n    uvicorn.run(app, host="0.0.0.0", port=8000)\n```\n\n✓ Type hints validated\n✓ Async functions optimized\n✓ 0 warnings\n\nTokens used: 1,156 | Latency: 19ms',
   ],
 };
 
@@ -72,8 +65,8 @@ const Generate = () => {
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [activeConvId, setActiveConvId] = useState<string | null>(null);
   const [prompt, setPrompt] = useState("");
-  const [genType, setGenType] = useState<GenerationType>("text");
-  const [selectedModel, setSelectedModel] = useState(MODELS.text[0]);
+  const [genType] = useState<GenerationType>("code");
+  const [selectedModel, setSelectedModel] = useState(MODELS.code[0]);
   const [isGenerating, setIsGenerating] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [showModelDropdown, setShowModelDropdown] = useState(false);
@@ -86,14 +79,13 @@ const Generate = () => {
   const messages = useMemo(() => activeConv?.messages ?? [], [activeConv?.messages]);
 
   useEffect(() => {
-    setSelectedModel(MODELS[genType][0]);
-  }, [genType]);
+    setSelectedModel(MODELS.code[0]);
+  }, []);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  // Cipher animation
   useEffect(() => {
     if (!cipherActive) return;
     const interval = setInterval(() => {
@@ -111,13 +103,13 @@ const Generate = () => {
       id: crypto.randomUUID(),
       title: "New Generation",
       messages: [],
-      type: genType,
+      type: "code",
       createdAt: new Date(),
     };
     setConversations((prev) => [conv, ...prev]);
     setActiveConvId(conv.id);
     return conv.id;
-  }, [genType]);
+  }, []);
 
   const handleGenerate = useCallback(() => {
     if (!prompt.trim() || isGenerating) return;
@@ -131,7 +123,7 @@ const Generate = () => {
       id: crypto.randomUUID(),
       role: "user",
       content: prompt,
-      type: genType,
+      type: "code",
       timestamp: new Date(),
     };
 
@@ -158,14 +150,14 @@ const Generate = () => {
     setTimeout(() => {
       setCipherActive(false);
 
-      const responses = SAMPLE_RESPONSES[genType];
+      const responses = SAMPLE_RESPONSES.code;
       const responseText = responses[Math.floor(Math.random() * responses.length)];
 
       const assistantMsg: Message = {
         id: crypto.randomUUID(),
         role: "assistant",
         content: responseText,
-        type: genType,
+        type: "code",
         timestamp: new Date(),
       };
 
@@ -176,7 +168,7 @@ const Generate = () => {
       );
       setIsGenerating(false);
     }, duration);
-  }, [prompt, isGenerating, activeConvId, genType, createConversation]);
+  }, [prompt, isGenerating, activeConvId, createConversation]);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && !e.shiftKey) {
@@ -190,7 +182,7 @@ const Generate = () => {
     if (activeConvId === id) setActiveConvId(null);
   };
 
-  const TypeIcon = TYPE_ICONS[genType];
+  const TypeIcon = Code;
 
   return (
     <div className="h-screen w-screen flex bg-background text-foreground overflow-hidden">
@@ -224,7 +216,6 @@ const Generate = () => {
         {/* Conversation list */}
         <div className="flex-1 overflow-y-auto">
           {conversations.map((conv) => {
-            const Icon = TYPE_ICONS[conv.type];
             return (
               <div
                 key={conv.id}
@@ -235,7 +226,7 @@ const Generate = () => {
                 }`}
                 onClick={() => setActiveConvId(conv.id)}
               >
-                <Icon size={14} className="shrink-0 text-muted-foreground" />
+                <Code size={14} className="shrink-0 text-muted-foreground" />
                 <div className="flex-1 min-w-0">
                   <div className="font-mono text-xs truncate">{conv.title}</div>
                   <div className="font-mono text-[10px] text-muted-foreground mt-0.5">
@@ -287,26 +278,13 @@ const Generate = () => {
               ≡
             </button>
 
-            {/* Type selector */}
+            {/* Type indicator - CODE ONLY */}
             <div className="flex gap-px bg-border">
-              {(["text", "image", "code", "audio"] as GenerationType[]).map(
-                (t) => {
-                  const Icon = TYPE_ICONS[t];
-                  return (
-                    <button
-                      key={t}
-                      onClick={() => setGenType(t)}
-                      className={`flex items-center gap-2 px-4 py-2 font-mono text-xs uppercase tracking-wider cursor-pointer border-0 transition-colors ${
-                        genType === t
-                          ? "bg-foreground text-background"
-                          : "bg-background text-muted-foreground hover:text-foreground"
-                      }`}
-                    >
-                      <Icon size={12} /> {t}
-                    </button>
-                  );
-                }
-              )}
+              <button
+                className="flex items-center gap-2 px-4 py-2 font-mono text-xs uppercase tracking-wider cursor-pointer border-0 transition-colors bg-foreground text-background"
+              >
+                <Code size={12} /> CODE
+              </button>
             </div>
           </div>
 
@@ -314,28 +292,31 @@ const Generate = () => {
           <div className="relative">
             <button
               onClick={() => setShowModelDropdown(!showModelDropdown)}
-              className="flex items-center gap-2 px-4 py-2 border border-border font-mono text-xs tracking-wider cursor-pointer bg-background text-foreground hover:border-foreground"
+              className="flex items-center gap-2 px-4 py-2 border border-border font-mono text-xs tracking-wider cursor-pointer bg-background text-foreground hover:border-foreground transition-colors"
+              data-testid="model-selector"
             >
               <Sparkles size={12} />
               {selectedModel}
               <ChevronDown size={12} />
             </button>
             {showModelDropdown && (
-              <div className="absolute right-0 top-full mt-1 bg-background border border-border z-20 min-w-[200px]">
-                {MODELS[genType].map((model) => (
+              <div className="absolute right-0 top-full mt-1 bg-background border border-border z-20 min-w-[240px] shadow-lg animate-in fade-in slide-in-from-top-2">
+                {MODELS.code.map((model) => (
                   <button
                     key={model}
                     onClick={() => {
                       setSelectedModel(model);
                       setShowModelDropdown(false);
                     }}
-                    className={`w-full text-left px-4 py-3 font-mono text-xs border-0 cursor-pointer ${
+                    className={`w-full text-left px-4 py-3 font-mono text-xs border-0 cursor-pointer transition-colors flex items-center justify-between ${
                       model === selectedModel
                         ? "bg-foreground text-background"
                         : "bg-background text-foreground hover:bg-secondary"
                     }`}
+                    data-testid={`model-option-${model}`}
                   >
                     {model}
+                    {model === selectedModel && <Check size={12} />}
                   </button>
                 ))}
               </div>
@@ -349,70 +330,28 @@ const Generate = () => {
             <div className="h-full flex flex-col items-center justify-center px-6">
               <TypeIcon size={32} strokeWidth={1} className="mb-6 text-muted-foreground" />
               <h2 className="font-display text-3xl md:text-5xl font-bold tracking-tight mb-4 text-center">
-                {genType === "text" && "GENERATE TEXT"}
-                {genType === "image" && "CREATE IMAGES"}
-                {genType === "code" && "WRITE CODE"}
-                {genType === "audio" && "PRODUCE AUDIO"}
+                WRITE CODE
               </h2>
               <p className="font-mono text-xs text-muted-foreground text-center max-w-md mb-10">
                 Enter a detailed prompt below. The more context you provide, the
-                better the output.
+                better the generated code.
               </p>
 
               {/* Quick prompts */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-w-lg w-full">
-                {genType === "text" && [
-                  "Explain quantum computing in simple terms",
-                  "Write a product description for an AI tool",
-                  "Create a technical blog post outline",
-                  "Summarize the latest trends in AI",
-                ].map((p) => (
-                  <button
-                    key={p}
-                    onClick={() => setPrompt(p)}
-                    className="text-left px-4 py-3 border border-border font-mono text-xs hover:bg-secondary cursor-pointer bg-background text-foreground"
-                  >
-                    {p}
-                  </button>
-                ))}
-                {genType === "image" && [
-                  "A futuristic city skyline at sunset",
-                  "Abstract geometric art in monochrome",
-                  "Product mockup on marble surface",
-                  "Portrait of a cyberpunk character",
-                ].map((p) => (
-                  <button
-                    key={p}
-                    onClick={() => setPrompt(p)}
-                    className="text-left px-4 py-3 border border-border font-mono text-xs hover:bg-secondary cursor-pointer bg-background text-foreground"
-                  >
-                    {p}
-                  </button>
-                ))}
-                {genType === "code" && [
+                {[
                   "Build a REST API with Express.js",
                   "Create a React hook for dark mode",
                   "Write a sorting algorithm in Python",
                   "Generate a database schema for e-commerce",
+                  "Create a Vue.js component with animations",
+                  "Build a GraphQL resolver for users",
                 ].map((p) => (
                   <button
                     key={p}
                     onClick={() => setPrompt(p)}
-                    className="text-left px-4 py-3 border border-border font-mono text-xs hover:bg-secondary cursor-pointer bg-background text-foreground"
-                  >
-                    {p}
-                  </button>
-                ))}
-                {genType === "audio" && [
-                  "Lo-fi hip hop beat with rain sounds",
-                  "Epic orchestral trailer music",
-                  "Ambient soundscape for meditation",
-                  "Upbeat electronic dance track",
-                ].map((p) => (
-                  <button
-                    key={p}
-                    onClick={() => setPrompt(p)}
-                    className="text-left px-4 py-3 border border-border font-mono text-xs hover:bg-secondary cursor-pointer bg-background text-foreground"
+                    className="text-left px-4 py-3 border border-border font-mono text-xs hover:bg-secondary cursor-pointer bg-background text-foreground transition-colors hover:border-foreground"
+                    data-testid={`quick-prompt-${p.replace(/\s+/g, '-').toLowerCase()}`}
                   >
                     {p}
                   </button>
@@ -425,14 +364,15 @@ const Generate = () => {
                 <div
                   key={msg.id}
                   className={`mb-8 ${msg.role === "user" ? "" : "animate-slide-up"}`}
+                  data-testid={`message-${msg.id}`}
                 >
                   {/* Message header */}
                   <div className="flex items-center gap-3 mb-3">
                     <div
-                      className={`w-6 h-6 flex items-center justify-center font-mono text-xs ${
+                      className={`w-6 h-6 flex items-center justify-center font-mono text-xs font-bold transition-colors ${
                         msg.role === "user"
                           ? "bg-foreground text-background"
-                          : "border border-foreground"
+                          : "border border-foreground text-foreground"
                       }`}
                     >
                       {msg.role === "user" ? "U" : "Q"}
@@ -447,21 +387,27 @@ const Generate = () => {
 
                   {/* Message content */}
                   <div className="pl-9">
-                    <pre className="font-mono text-sm leading-relaxed whitespace-pre-wrap">
+                    <pre className="font-mono text-sm leading-relaxed whitespace-pre-wrap text-foreground">
                       {msg.content}
                     </pre>
 
                     {/* Action buttons for assistant messages */}
                     {msg.role === "assistant" && (
-                      <div className="flex gap-2 mt-4">
+                      <div className="flex gap-2 mt-4 flex-wrap">
                         {[
-                          { icon: Copy, label: "COPY" },
-                          { icon: Download, label: "EXPORT" },
-                          { icon: RefreshCw, label: "RETRY" },
+                          { icon: Copy, label: "COPY", action: "copy" },
+                          { icon: Download, label: "EXPORT", action: "export" },
+                          { icon: RefreshCw, label: "RETRY", action: "retry" },
                         ].map((action) => (
                           <button
                             key={action.label}
-                            className="flex items-center gap-1.5 px-3 py-1.5 border border-border font-mono text-[10px] tracking-wider cursor-pointer bg-background text-muted-foreground hover:text-foreground hover:border-foreground"
+                            className="flex items-center gap-1.5 px-3 py-1.5 border border-border font-mono text-[10px] tracking-wider cursor-pointer bg-background text-muted-foreground hover:text-foreground hover:border-foreground transition-colors"
+                            onClick={() => {
+                              if (action.action === "copy") {
+                                navigator.clipboard.writeText(msg.content);
+                              }
+                            }}
+                            data-testid={`action-${action.action}-${msg.id}`}
                           >
                             <action.icon size={10} /> {action.label}
                           </button>
@@ -474,9 +420,9 @@ const Generate = () => {
 
               {/* Generating state */}
               {isGenerating && (
-                <div className="mb-8">
+                <div className="mb-8 animate-slide-up" data-testid="generating-message">
                   <div className="flex items-center gap-3 mb-3">
-                    <div className="w-6 h-6 flex items-center justify-center border border-foreground font-mono text-xs">
+                    <div className="w-6 h-6 flex items-center justify-center border border-foreground font-mono text-xs font-bold">
                       Q
                     </div>
                     <span className="font-mono text-xs tracking-wider">
@@ -503,20 +449,21 @@ const Generate = () => {
         </div>
 
         {/* Input area */}
-        <div className="border-t border-border p-4 shrink-0">
+        <div className="border-t border-border p-4 shrink-0 bg-background">
           <div className="max-w-4xl mx-auto">
             <div className="flex items-end gap-3">
-              <div className="flex-1 relative border border-border focus-within:border-foreground">
+              <div className="flex-1 relative border border-border focus-within:border-foreground transition-colors">
                 <textarea
                   ref={inputRef}
                   value={prompt}
                   onChange={(e) => setPrompt(e.target.value)}
                   onKeyDown={handleKeyDown}
-                  placeholder={`Describe what you want to ${genType === "text" ? "generate" : genType === "image" ? "create" : genType === "code" ? "build" : "produce"}...`}
+                  placeholder="Describe the code you want to generate..."
                   className="w-full bg-background text-foreground font-mono text-sm p-4 pr-12 resize-none outline-none min-h-[56px] max-h-[200px] border-0"
                   rows={1}
                   disabled={isGenerating}
                   style={{ caretColor: "hsl(var(--foreground))" }}
+                  data-testid="code-input"
                 />
                 <div className="absolute right-3 bottom-3 font-mono text-[10px] text-muted-foreground">
                   {selectedModel}
@@ -525,18 +472,11 @@ const Generate = () => {
               <button
                 onClick={handleGenerate}
                 disabled={!prompt.trim() || isGenerating}
-                className="btn-primary p-4 disabled:opacity-20 disabled:cursor-not-allowed shrink-0"
+                className="btn-primary p-4 disabled:opacity-20 disabled:cursor-not-allowed shrink-0 transition-all hover:scale-105 active:scale-95"
+                data-testid="generate-button"
               >
                 <Send size={16} />
               </button>
-            </div>
-            <div className="flex items-center justify-between mt-2">
-              <div className="font-mono text-[10px] text-muted-foreground tracking-wider">
-                SHIFT+ENTER FOR NEW LINE — ENTER TO GENERATE
-              </div>
-              <div className="font-mono text-[10px] text-muted-foreground tracking-wider">
-                QUICKWEBSTACK v1.0
-              </div>
             </div>
           </div>
         </div>

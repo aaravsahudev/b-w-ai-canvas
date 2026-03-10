@@ -38,8 +38,8 @@ const HeroSection = () => {
           className="font-mono text-sm md:text-base max-w-2xl mx-auto mb-12 leading-relaxed animate-slide-up text-muted-foreground"
           style={{ animationDelay: "0.3s" }}
         >
-          Harness the raw computational power of advanced AI models.
-          Generate text, images, code, and more — all from a single interface.
+          QuickWebStack puts the full force of generative AI at your fingertips.
+          From text and visuals to code and beyond — build faster, create bolder.
         </p>
 
         <div

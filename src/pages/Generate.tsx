@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Send,
@@ -83,7 +83,7 @@ const Generate = () => {
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
   const activeConv = conversations.find((c) => c.id === activeConvId);
-  const messages = activeConv?.messages ?? [];
+  const messages = useMemo(() => activeConv?.messages ?? [], [activeConv?.messages]);
 
   useEffect(() => {
     setSelectedModel(MODELS[genType][0]);

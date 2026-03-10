@@ -9,7 +9,7 @@
     --background: 0 0% 0%;
     --foreground: 0 0% 100%;
 
-    --card: 0 0% 0%;
+    --card: 0 0% 4%;
     --card-foreground: 0 0% 100%;
 
     --popover: 0 0% 0%;
@@ -18,11 +18,11 @@
     --primary: 0 0% 100%;
     --primary-foreground: 0 0% 0%;
 
-    --secondary: 0 0% 0%;
+    --secondary: 0 0% 8%;
     --secondary-foreground: 0 0% 100%;
 
-    --muted: 0 0% 0%;
-    --muted-foreground: 0 0% 100%;
+    --muted: 0 0% 12%;
+    --muted-foreground: 0 0% 60%;
 
     --accent: 0 0% 100%;
     --accent-foreground: 0 0% 0%;
@@ -30,8 +30,8 @@
     --destructive: 0 0% 100%;
     --destructive-foreground: 0 0% 0%;
 
-    --border: 0 0% 100%;
-    --input: 0 0% 100%;
+    --border: 0 0% 20%;
+    --input: 0 0% 15%;
     --ring: 0 0% 100%;
 
     --radius: 0px;
@@ -59,7 +59,6 @@
   body {
     @apply bg-background text-foreground;
     font-family: var(--font-mono);
-    overflow: hidden;
   }
 
   h1, h2, h3, h4, h5, h6 {
@@ -69,14 +68,13 @@
 
 @layer components {
   .terminal-input {
-    @apply bg-background text-foreground border border-foreground font-mono w-full p-4 outline-none;
+    @apply bg-secondary text-foreground border border-border w-full p-4 outline-none;
     font-family: var(--font-mono);
     caret-color: hsl(var(--foreground));
   }
 
   .terminal-input::placeholder {
-    color: hsl(var(--foreground));
-    opacity: 0.4;
+    color: hsl(var(--muted-foreground));
   }
 
   .terminal-input:focus {
@@ -85,39 +83,46 @@
     box-shadow: none;
   }
 
-  .btn-generate {
-    @apply bg-foreground text-background font-mono uppercase tracking-widest text-sm px-8 py-4 border-0 cursor-pointer;
+  .btn-primary {
+    @apply bg-foreground text-background font-mono uppercase tracking-widest text-sm px-8 py-4 border-0 cursor-pointer inline-flex items-center justify-center;
     font-family: var(--font-mono);
-    transition: none;
+    transition: all 0.15s ease;
   }
 
-  .btn-generate:hover {
+  .btn-primary:hover {
     @apply bg-background text-foreground border border-foreground;
   }
 
-  .divider-vertical {
-    @apply w-px bg-foreground h-full;
+  .btn-outline {
+    @apply bg-background text-foreground font-mono uppercase tracking-widest text-sm px-8 py-4 border border-foreground cursor-pointer inline-flex items-center justify-center;
+    font-family: var(--font-mono);
+    transition: all 0.15s ease;
   }
 
-  .nav-overlay {
-    @apply fixed inset-0 bg-foreground text-background z-50;
+  .btn-outline:hover {
+    @apply bg-foreground text-background;
   }
 }
 
-/* ASCII cipher animation */
-@keyframes cipher-flicker {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.7; }
-}
-
-@keyframes flash-invert {
-  0% { filter: invert(1); }
-  100% { filter: invert(0); }
-}
-
+/* Animations */
 @keyframes cursor-blink {
   0%, 50% { opacity: 1; }
   51%, 100% { opacity: 0; }
+}
+
+@keyframes slide-up {
+  from { transform: translateY(30px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes slide-in-left {
+  from { transform: translateX(-30px); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 @keyframes text-glitch {
@@ -128,22 +133,35 @@
   100% { transform: translateX(0); }
 }
 
-@keyframes slide-up {
-  from { transform: translateY(20px); opacity: 0; }
-  to { transform: translateY(0); opacity: 1; }
+@keyframes cipher-flicker {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
 }
 
-@keyframes scale-recede {
-  from { transform: scale(1); opacity: 1; }
-  to { transform: scale(0.85); opacity: 0.3; }
+@keyframes flash-invert {
+  0% { filter: invert(1); }
+  100% { filter: invert(0); }
 }
 
-.animate-cipher { animation: cipher-flicker 0.05s infinite; }
-.animate-flash { animation: flash-invert 0.05s ease-out; }
+@keyframes pulse-line {
+  0%, 100% { opacity: 0.2; }
+  50% { opacity: 1; }
+}
+
+@keyframes marquee {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+.animate-slide-up { animation: slide-up 0.6s ease-out forwards; opacity: 0; }
+.animate-slide-in-left { animation: slide-in-left 0.6s ease-out forwards; opacity: 0; }
+.animate-fade-in { animation: fade-in 0.8s ease-out forwards; opacity: 0; }
 .animate-cursor-blink { animation: cursor-blink 1s step-end infinite; }
 .animate-text-glitch { animation: text-glitch 0.1s ease-in-out infinite; }
-.animate-slide-up { animation: slide-up 0.4s ease-out forwards; }
-.animate-scale-recede { animation: scale-recede 0.5s ease-out forwards; }
+.animate-cipher { animation: cipher-flicker 0.05s infinite; }
+.animate-flash { animation: flash-invert 0.05s ease-out; }
+.animate-pulse-line { animation: pulse-line 2s ease-in-out infinite; }
+.animate-marquee { animation: marquee 20s linear infinite; }
 
 .font-display { font-family: var(--font-display); }
 .font-mono { font-family: var(--font-mono); }

@@ -38,7 +38,7 @@ const HeroSection = () => {
         >
           QUICK
           <br />
-          WEB
+           WEB
           <br />
           STACK<span className="animate-cursor-blink">_</span>
         </h1>

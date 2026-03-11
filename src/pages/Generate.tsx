@@ -6,17 +6,11 @@ import {
   Code,
   MessageSquare,
   Settings,
-  ChevronDown,
-  Copy,
-  Download,
-  RefreshCw,
   Trash2,
   ArrowLeft,
-  Sparkles,
-  Check,
 } from "lucide-react";
 import logo from "@/assets/logo.png";
-import { generateCode, CodeLanguage } from "@/utils/codeGenerator";
+import { generateCode } from "@/utils/codeGenerator";
 
 const CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*<>?";
 
@@ -33,24 +27,13 @@ type Conversation = {
   createdAt: Date;
 };
 
-const LANGUAGES: CodeLanguage[] = ["html", "react", "vue", "nextjs"];
-
-const LANGUAGE_NAMES: Record<CodeLanguage, string> = {
-  html: "HTML",
-  react: "React",
-  vue: "Vue.js",
-  nextjs: "Next.js",
-};
-
 const Generate = () => {
   const navigate = useNavigate();
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [activeConvId, setActiveConvId] = useState<string | null>(null);
   const [prompt, setPrompt] = useState("");
-  const [selectedLanguage, setSelectedLanguage] = useState<CodeLanguage>("html");
   const [isGenerating, setIsGenerating] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(true);
-  const [showLanguageDropdown, setShowLanguageDropdown] = useState(false);
   const [cipherActive, setCipherActive] = useState(false);
   const [cipherText, setCipherText] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -125,13 +108,13 @@ const Generate = () => {
     setTimeout(() => {
       setCipherActive(false);
 
-      // Generate code using the code generator utility
-      const generatedCode = generateCode(prompt, selectedLanguage);
+      // Generate code automatically (HTML)
+      const generatedCode = generateCode(prompt, "html");
 
       const assistantMsg: Message = {
         id: crypto.randomUUID(),
         role: "assistant",
-        content: `✓ ${LANGUAGE_NAMES[selectedLanguage]} website generated successfully!`,
+        content: `✓ Your website has been generated successfully!`,
         timestamp: new Date(),
       };
 
@@ -149,13 +132,13 @@ const Generate = () => {
             id: crypto.randomUUID(),
             title: prompt.slice(0, 50),
             code: generatedCode,
-            language: selectedLanguage,
+            language: "html",
             prompt: prompt,
           },
         });
       }, 500);
     }, duration);
-  }, [prompt, isGenerating, activeConvId, selectedLanguage, createConversation, navigate]);
+  }, [prompt, isGenerating, activeConvId, createConversation, navigate]);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && !e.shiftKey) {
@@ -262,24 +245,6 @@ const Generate = () => {
             >
               ≡
             </button>
-
-            {/* Language selector */}
-            <div className="flex gap-px bg-border">
-              {LANGUAGES.map((lang) => (
-                <button
-                  key={lang}
-                  onClick={() => setSelectedLanguage(lang)}
-                  className={`flex items-center gap-2 px-4 py-2 font-mono text-xs uppercase tracking-wider cursor-pointer border-0 transition-colors ${
-                    selectedLanguage === lang
-                      ? "bg-foreground text-background"
-                      : "bg-background text-muted-foreground hover:text-foreground"
-                  }`}
-                  data-testid={`lang-${lang}`}
-                >
-                  <Code size={12} /> {LANGUAGE_NAMES[lang]}
-                </button>
-              ))}
-            </div>
           </div>
 
           {/* Generate status */}
@@ -302,7 +267,7 @@ const Generate = () => {
                 GENERATE NOW
               </h2>
               <p className="font-mono text-xs text-muted-foreground text-center max-w-md mb-10">
-                Describe your website idea. Our AI will generate code in your chosen language and show you a live preview.
+                Describe the website you want to create. We'll build it instantly and show you a live preview.
               </p>
 
               {/* Quick prompts */}
@@ -402,16 +367,13 @@ const Generate = () => {
                   value={prompt}
                   onChange={(e) => setPrompt(e.target.value)}
                   onKeyDown={handleKeyDown}
-                  placeholder="Describe the website you want to generate..."
-                  className="w-full bg-background text-foreground font-mono text-sm p-4 pr-12 resize-none outline-none min-h-[56px] max-h-[200px] border-0"
+                  placeholder="What website do you want to create?"
+                  className="w-full bg-background text-foreground font-mono text-sm p-4 resize-none outline-none min-h-[56px] max-h-[200px] border-0"
                   rows={1}
                   disabled={isGenerating}
                   style={{ caretColor: "hsl(var(--foreground))" }}
                   data-testid="website-input"
                 />
-                <div className="absolute right-3 bottom-3 font-mono text-[10px] text-muted-foreground">
-                  {LANGUAGE_NAMES[selectedLanguage]}
-                </div>
               </div>
               <button
                 onClick={handleGenerate}

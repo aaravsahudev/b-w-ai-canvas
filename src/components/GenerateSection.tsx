@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
-import { Send } from "lucide-react";
+import { Send, ArrowRight } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 const CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*<>?/|";
 
@@ -34,6 +35,7 @@ The generative model identified 12 unique structural patterns, correlating tempo
 ];
 
 const GenerateSection = () => {
+  const navigate = useNavigate();
   const [prompt, setPrompt] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
   const [output, setOutput] = useState("");
@@ -42,7 +44,6 @@ const GenerateSection = () => {
   const [flashActive, setFlashActive] = useState(false);
   const [genCount, setGenCount] = useState(0);
 
-  // Cipher animation
   useEffect(() => {
     if (!showCipher || !prompt) return;
     const interval = setInterval(() => {
@@ -86,18 +87,25 @@ const GenerateSection = () => {
       className={`py-32 px-6 border-t border-border ${flashActive ? "animate-flash" : ""}`}
     >
       <div className="max-w-5xl mx-auto">
-        <div className="mb-16">
-          <div className="font-mono text-xs tracking-[0.5em] uppercase mb-4 text-muted-foreground">
-            TERMINAL
+        <div className="mb-16 flex flex-col md:flex-row md:items-end md:justify-between gap-6">
+          <div>
+            <div className="font-mono text-xs tracking-[0.5em] uppercase mb-4 text-muted-foreground">
+              TERMINAL
+            </div>
+            <h2 className="font-display text-4xl md:text-6xl font-bold tracking-tight">
+              GENERATE NOW
+            </h2>
           </div>
-          <h2 className="font-display text-4xl md:text-6xl font-bold tracking-tight">
-            GENERATE NOW
-          </h2>
+          <button
+            onClick={() => navigate("/generate")}
+            className="btn-primary text-sm py-4 px-10 gap-3 flex items-center w-fit shrink-0"
+          >
+            OPEN FULL IDE <ArrowRight size={14} />
+          </button>
         </div>
 
         {/* Terminal window */}
         <div className="border border-border">
-          {/* Terminal header */}
           <div className="border-b border-border px-6 py-3 flex items-center justify-between">
             <div className="font-mono text-xs tracking-widest text-muted-foreground">
               QWS://TERMINAL
@@ -109,7 +117,6 @@ const GenerateSection = () => {
             </div>
           </div>
 
-          {/* Output area */}
           <div className="min-h-[300px] p-6 border-b border-border">
             {!output && !isGenerating && (
               <div className="flex items-center justify-center h-[250px]">
@@ -121,19 +128,12 @@ const GenerateSection = () => {
                 </div>
               </div>
             )}
-
             {showCipher && (
-              <div className="font-mono text-sm animate-cipher leading-relaxed">
-                {cipherText}
-              </div>
+              <div className="font-mono text-sm animate-cipher leading-relaxed">{cipherText}</div>
             )}
-
             {isGenerating && !showCipher && (
-              <div className="font-mono text-sm animate-text-glitch">
-                PROCESSING...
-              </div>
+              <div className="font-mono text-sm animate-text-glitch">PROCESSING...</div>
             )}
-
             {output && !isGenerating && (
               <pre className="font-mono text-sm leading-relaxed whitespace-pre-wrap animate-slide-up">
                 {output}
@@ -141,12 +141,9 @@ const GenerateSection = () => {
             )}
           </div>
 
-          {/* Input area */}
           <div className="flex">
             <div className="flex-1 relative">
-              <span className="absolute left-6 top-1/2 -translate-y-1/2 font-mono text-sm text-muted-foreground">
-                {">"}
-              </span>
+              <span className="absolute left-6 top-1/2 -translate-y-1/2 font-mono text-sm text-muted-foreground">{">"}</span>
               <textarea
                 value={prompt}
                 onChange={(e) => setPrompt(e.target.value)}
@@ -167,7 +164,6 @@ const GenerateSection = () => {
           </div>
         </div>
 
-        {/* Generation meta */}
         <div className="flex justify-between mt-4 font-mono text-xs tracking-widest text-muted-foreground">
           <span>MODEL: QWS-ULTRA-V4</span>
           <span>GENERATIONS: {genCount}</span>

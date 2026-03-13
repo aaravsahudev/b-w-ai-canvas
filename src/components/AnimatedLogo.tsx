@@ -1,6 +1,6 @@
 const AnimatedLogo = ({ size = 32 }: { size?: number }) => {
   return (
-    <div style={{ display: "flex", alignItems: "center", gap: size * 0.3, flexShrink: 0 }}>
+    <div style={{ display: "flex", alignItems: "center", gap: size * 0.28, flexShrink: 0 }}>
       <style>{`
         @keyframes navSpinRing {
           from { transform: rotate(0deg); }
@@ -11,35 +11,32 @@ const AnimatedLogo = ({ size = 32 }: { size?: number }) => {
           to   { transform: rotate(-360deg); }
         }
         @keyframes navCircleGlow {
-          0%, 100% { stroke-opacity: 0.8; }
+          0%, 100% { stroke-opacity: 0.75; }
           50%       { stroke-opacity: 1; }
         }
         @keyframes navTailPulse {
-          0%, 100% { opacity: 0.7; }
+          0%, 100% { opacity: 0.65; }
           50%       { opacity: 1; }
         }
         @keyframes navDotPulse {
-          0%, 100% { r: 3; opacity: 0.2; }
-          50%       { r: 4.5; opacity: 0.5; }
+          0%, 100% { r: 2.5; opacity: 0.15; }
+          50%       { r: 4; opacity: 0.45; }
         }
-        .nav-q-ring-outer {
-          animation: navSpinRing 10s linear infinite;
-          transform-origin: 40px 40px;
-        }
-        .nav-q-ring-inner {
-          animation: navSpinRingRev 6s linear infinite;
-          transform-origin: 40px 40px;
-        }
-        .nav-q-circle { animation: navCircleGlow 2.5s ease-in-out infinite; }
-        .nav-q-tail   { animation: navTailPulse 2.5s ease-in-out infinite 0.4s; }
-        .nav-q-dot    { animation: navDotPulse 2.5s ease-in-out infinite; }
+        .nav-q-ring-outer { animation: navSpinRing 10s linear infinite; transform-origin: 40px 40px; }
+        .nav-q-ring-inner { animation: navSpinRingRev 6s linear infinite; transform-origin: 40px 40px; }
+        .nav-q-circle     { animation: navCircleGlow 2.5s ease-in-out infinite; }
+        .nav-q-tail       { animation: navTailPulse 2.5s ease-in-out infinite 0.4s; }
+        .nav-q-dot        { animation: navDotPulse 2.5s ease-in-out infinite; }
+
+        .logo-text-hide { display: flex; }
+        @media (max-width: 400px) { .logo-text-hide { display: none; } }
       `}</style>
 
       <svg
         viewBox="0 0 80 80"
         fill="none"
         xmlns="http://www.w3.org/2000/svg"
-        style={{ width: size, height: size, overflow: "visible", flexShrink: 0 }}
+        style={{ width: size, height: size, overflow: "visible", flexShrink: 0, background: "transparent" }}
       >
         <circle
           className="nav-q-ring-outer"
@@ -54,7 +51,7 @@ const AnimatedLogo = ({ size = 32 }: { size?: number }) => {
           className="nav-q-ring-inner"
           cx="40" cy="40" r="31"
           stroke="currentColor"
-          strokeOpacity="0.08"
+          strokeOpacity="0.07"
           strokeWidth="0.5"
           strokeDasharray="2 6"
           fill="none"
@@ -74,18 +71,21 @@ const AnimatedLogo = ({ size = 32 }: { size?: number }) => {
           strokeWidth="6"
           strokeLinecap="round"
         />
-        <circle className="nav-q-dot" cx="40" cy="40" r="3" fill="currentColor" fillOpacity="0.25" />
+        <circle className="nav-q-dot" cx="40" cy="40" r="2.5" fill="currentColor" fillOpacity="0.2" />
       </svg>
 
-      <span style={{
-        fontFamily: "'Space Grotesk', sans-serif",
-        fontWeight: 800,
-        fontSize: size * 0.56,
-        letterSpacing: "-0.025em",
-        whiteSpace: "nowrap",
-        lineHeight: 1,
-      }}>
-        Quick<span style={{ fontWeight: 400, opacity: 0.65 }}>WebStack</span>
+      <span
+        className="logo-text-hide"
+        style={{
+          fontFamily: "'Space Grotesk', sans-serif",
+          fontWeight: 800,
+          fontSize: Math.max(size * 0.52, 13),
+          letterSpacing: "-0.025em",
+          whiteSpace: "nowrap",
+          lineHeight: 1,
+        }}
+      >
+        Quick<span style={{ fontWeight: 400, opacity: 0.6 }}>WebStack</span>
       </span>
     </div>
   );

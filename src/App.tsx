@@ -8,6 +8,8 @@ import Intro from "./pages/Intro.tsx";
 import Index from "./pages/Index.tsx";
 import Generate from "./pages/Generate.tsx";
 import Workspace from "./pages/Workspace.tsx";
+import Docs from "./pages/Docs.tsx";
+import About from "./pages/About.tsx";
 import NotFound from "./pages/NotFound.tsx";
 
 const queryClient = new QueryClient();
@@ -38,6 +40,8 @@ const App = () => (
           <Route path="/home" element={<Index />} />
           <Route path="/generate" element={<Generate />} />
           <Route path="/workspace" element={<Workspace />} />
+          <Route path="/docs" element={<Docs />} />
+          <Route path="/about" element={<About />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>

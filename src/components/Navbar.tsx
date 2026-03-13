@@ -18,7 +18,7 @@ const Navbar = () => {
     <>
       <nav className="fixed top-0 left-0 right-0 z-40 border-b border-border bg-background">
         <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
-          <a href="/" className="flex items-center gap-3">
+          <a href="/home" className="flex items-center gap-3">
             <img src={logo} alt="QuickWebStack" className="h-8" />
           </a>
 

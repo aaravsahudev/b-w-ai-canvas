@@ -9,7 +9,7 @@ const Intro = () => {
   // Auto-navigate after animation completes
   useEffect(() => {
     const fadeTimer = setTimeout(() => setFadeOut(true), 2800);
-    const navTimer = setTimeout(() => navigate("/generate"), 3400);
+    const navTimer = setTimeout(() => navigate("/home"), 3400);
     return () => {
       clearTimeout(fadeTimer);
       clearTimeout(navTimer);
@@ -75,7 +75,7 @@ const Intro = () => {
         opacity: fadeOut ? 0 : 1,
         fontFamily: "'Space Grotesk', sans-serif",
       }}
-      onClick={() => navigate("/generate")}
+      onClick={() => navigate("/home")}
     >
       {/* Moving grid background */}
       <style>{`

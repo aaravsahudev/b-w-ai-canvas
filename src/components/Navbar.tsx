@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Menu, X } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import logo from "@/assets/logo.png";
+import AnimatedLogo from "@/components/AnimatedLogo";
 
 const Navbar = () => {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -18,8 +18,8 @@ const Navbar = () => {
     <>
       <nav className="fixed top-0 left-0 right-0 z-40 border-b border-border bg-background">
         <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
-          <a href="/home" className="flex items-center gap-3">
-            <img src={logo} alt="QuickWebStack" className="h-8" />
+          <a href="/home" className="flex items-center">
+            <AnimatedLogo size={28} />
           </a>
 
           <div className="hidden md:flex items-center gap-8">

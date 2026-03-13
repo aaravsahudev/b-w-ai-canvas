@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>QuickWebStack</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=Syne+Mono&display=swap');
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: #000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    font-family: 'Syne', sans-serif;
+    overflow: hidden;
+  }
+
+  /* Subtle grid background */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
+    background-size: 60px 60px;
+    animation: gridShift 20s linear infinite;
+  }
+
+  @keyframes gridShift {
+    from { transform: translate(0, 0); }
+    to   { transform: translate(60px, 60px); }
+  }
+
+  /* Glow pulse behind logo */
+  .glow-bg {
+    position: absolute;
+    width: 500px;
+    height: 200px;
+    background: radial-gradient(ellipse at center, rgba(255,255,255,0.07) 0%, transparent 70%);
+    border-radius: 50%;
+    animation: glowPulse 3s ease-in-out infinite;
+  }
+
+  @keyframes glowPulse {
+    0%, 100% { opacity: 0.5; transform: scale(1); }
+    50%       { opacity: 1;   transform: scale(1.15); }
+  }
+
+  /* Wrapper */
+  .logo-wrap {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 22px;
+    cursor: pointer;
+  }
+
+  /* ── Q icon ── */
+  .q-icon {
+    position: relative;
+    width: 80px;
+    height: 80px;
+    flex-shrink: 0;
+    animation: iconEntry 1s cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+
+  @keyframes iconEntry {
+    from { opacity: 0; transform: scale(0.3) rotate(-45deg); }
+    to   { opacity: 1; transform: scale(1)   rotate(0deg); }
+  }
+
+  .q-icon svg {
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+  }
+
+  /* Q circle */
+  .q-circle {
+    animation: drawCircle 1s 0.2s cubic-bezier(0.65, 0, 0.35, 1) both;
+  }
+
+  @keyframes drawCircle {
+    from { stroke-dashoffset: 220; }
+    to   { stroke-dashoffset: 0; }
+  }
+
+  /* Q tail */
+  .q-tail {
+    animation: drawTail 0.5s 0.9s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+    transform-origin: 38px 52px;
+  }
+
+  @keyframes drawTail {
+    from { opacity: 0; transform: scaleX(0); }
+    to   { opacity: 1; transform: scaleX(1); }
+  }
+
+  /* Spinning ring */
+  .q-ring {
+    animation: spinRing 8s linear infinite;
+    transform-origin: 40px 40px;
+  }
+
+  @keyframes spinRing {
+    from { transform: rotate(0deg); }
+    to   { transform: rotate(360deg); }
+  }
+
+  /* ── Text ── */
+  .logo-text {
+    display: flex;
+    flex-direction: column;
+    line-height: 1;
+    animation: textEntry 0.8s 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+
+  @keyframes textEntry {
+    from { opacity: 0; transform: translateX(30px); }
+    to   { opacity: 1; transform: translateX(0); }
+  }
+
+  .text-main {
+    font-size: 2.8rem;
+    font-weight: 800;
+    color: #fff;
+    letter-spacing: -0.03em;
+    white-space: nowrap;
+  }
+
+  .text-main .bold { font-weight: 800; color: #fff; }
+  .text-main .thin { font-weight: 400; color: rgba(255,255,255,0.75); }
+
+  .text-sub {
+    font-family: 'Syne Mono', monospace;
+    font-size: 0.62rem;
+    letter-spacing: 0.35em;
+    color: rgba(255,255,255,0.35);
+    text-transform: uppercase;
+    margin-top: 4px;
+    animation: subEntry 0.8s 1.1s cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+
+  @keyframes subEntry {
+    from { opacity: 0; transform: translateY(6px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* Divider line */
+  .divider {
+    position: absolute;
+    bottom: -14px;
+    left: 0;
+    height: 1px;
+    background: linear-gradient(90deg, rgba(255,255,255,0.5), rgba(255,255,255,0.05), transparent);
+    animation: lineGrow 0.8s 1.2s cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+
+  @keyframes lineGrow {
+    from { width: 0; }
+    to   { width: 100%; }
+  }
+
+  /* ── Hover interactions ── */
+  .logo-wrap:hover .q-ring {
+    animation: spinRing 1.5s linear infinite;
+  }
+
+  .logo-wrap:hover .q-icon {
+    filter: drop-shadow(0 0 20px rgba(255,255,255,0.6));
+  }
+
+  .logo-wrap:hover .text-main {
+    filter: drop-shadow(0 0 20px rgba(255,255,255,0.3));
+  }
+
+  .logo-wrap:hover .text-main .thin {
+    color: rgba(255,255,255,0.95);
+    transition: color 0.3s;
+  }
+
+  /* Particles */
+  .particles {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+  }
+
+  .particle {
+    position: absolute;
+    width: 2px;
+    height: 2px;
+    background: rgba(255,255,255,0.4);
+    border-radius: 50%;
+  }
+</style>
+</head>
+<body>
+
+<div class="glow-bg"></div>
+<canvas class="particles" id="canvas"></canvas>
+
+<div class="logo-wrap" id="logo">
+  <div class="q-icon">
+    <svg viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <!-- Outer spinning dashed ring -->
+      <circle class="q-ring" cx="40" cy="40" r="37"
+        stroke="rgba(255,255,255,0.08)" stroke-width="1"
+        stroke-dasharray="4 8" fill="none"/>
+
+      <!-- Main Q circle -->
+      <circle class="q-circle" cx="40" cy="40" r="28"
+        stroke="white" stroke-width="7" fill="none"
+        stroke-dasharray="220" stroke-dashoffset="220"
+        stroke-linecap="round"/>
+
+      <!-- Q tail/slash -->
+      <line class="q-tail"
+        x1="51" y1="51" x2="65" y2="65"
+        stroke="white" stroke-width="7" stroke-linecap="round"/>
+
+      <!-- Inner dot -->
+      <circle cx="40" cy="40" r="4" fill="rgba(255,255,255,0.15)"
+        style="animation: dotPulse 2s ease-in-out infinite 1.5s"/>
+    </svg>
+  </div>
+
+  <div class="logo-text">
+    <div class="text-main">
+      <span class="bold">Quick</span><span class="thin">WebStack</span>
+    </div>
+    <div class="text-sub">web infrastructure · fast</div>
+    <div class="divider"></div>
+  </div>
+</div>
+
+<style>
+  @keyframes dotPulse {
+    0%, 100% { r: 4; opacity: 0.15; }
+    50%       { r: 6; opacity: 0.35; }
+  }
+</style>
+
+<script>
+  // Particle field
+  const canvas = document.getElementById('canvas');
+  const ctx = canvas.getContext('2d');
+  let W, H, particles = [];
+
+  function resize() {
+    W = canvas.width  = window.innerWidth;
+    H = canvas.height = window.innerHeight;
+  }
+  resize();
+  window.addEventListener('resize', resize);
+
+  for (let i = 0; i < 60; i++) {
+    particles.push({
+      x: Math.random() * window.innerWidth,
+      y: Math.random() * window.innerHeight,
+      r: Math.random() * 1.2 + 0.3,
+      vx: (Math.random() - 0.5) * 0.3,
+      vy: (Math.random() - 0.5) * 0.3,
+      o: Math.random() * 0.4 + 0.1
+    });
+  }
+
+  function draw() {
+    ctx.clearRect(0, 0, W, H);
+    for (const p of particles) {
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(255,255,255,${p.o})`;
+      ctx.fill();
+      p.x += p.vx;
+      p.y += p.vy;
+      if (p.x < 0) p.x = W;
+      if (p.x > W) p.x = 0;
+      if (p.y < 0) p.y = H;
+      if (p.y > H) p.y = 0;
+    }
+    requestAnimationFrame(draw);
+  }
+  draw();
+
+  // Click burst
+  document.getElementById('logo').addEventListener('click', () => {
+    const logo = document.getElementById('logo');
+    logo.style.animation = 'none';
+    logo.querySelectorAll('*').forEach(el => el.style.animation = 'none');
+    setTimeout(() => location.reload(), 50);
+  });
+</script>
+</body>
+</html>

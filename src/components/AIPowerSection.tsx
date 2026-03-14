@@ -3,26 +3,33 @@ import { Brain, Cpu, Layers, GitBranch, ArrowRight } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 const metrics = [
-  { icon: Brain,     label: "ACTIVE MODELS",    value: "50+",  sub: "Multimodal AI engines" },
+  { icon: Brain,     label: "ACTIVE MODELS",    value: "50+",    sub: "Multimodal AI engines" },
   { icon: Cpu,       label: "GPU FLOPS",         value: "4.2 EF", sub: "Distributed compute" },
-  { icon: Layers,    label: "PARAMETERS",        value: "1.8T", sub: "Cross-architecture" },
-  { icon: GitBranch, label: "PARALLEL THREADS",  value: "256K", sub: "Concurrent inference" },
+  { icon: Layers,    label: "PARAMETERS",        value: "1.8T",   sub: "Cross-architecture" },
+  { icon: GitBranch, label: "PARALLEL THREADS",  value: "256K",   sub: "Concurrent inference" },
 ];
 
-interface Particle {
+interface NodeItem {
   x: number; y: number;
-  vx: number; vy: number;
+  tx: number; ty: number;
   layer: number;
-  r: number;
   phase: number;
+  shimSpeed: number;
+  targets: { x: number; y: number }[];
+  targetIdx: number;
+  morphT: number;
+  morphSpeed: number;
+  waitTimer: number;
 }
 
 interface Pulse {
-  edgeIdx: number;
+  from: number;
+  to: number;
   t: number;
-  speed: number;
-  opacity: number;
 }
+
+const LAYER_DEF = [3, 4, 4, 3];
+const MIN_DIST = 70;
 
 const AIPowerSection = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -35,11 +42,12 @@ const AIPowerSection = () => {
     if (!ctx) return;
 
     let animId: number;
-    let tick = 0;
+    let pulseTimer: ReturnType<typeof setInterval>;
 
     const setup = () => {
       canvas.width  = canvas.offsetWidth  * window.devicePixelRatio;
       canvas.height = canvas.offsetHeight * window.devicePixelRatio;
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
       ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
     };
     setup();
@@ -48,93 +56,143 @@ const AIPowerSection = () => {
     const W = () => canvas.offsetWidth;
     const H = () => canvas.offsetHeight;
 
-    const LAYERS = [4, 5, 6, 5, 4];
-    const TOTAL = LAYERS.reduce((a, b) => a + b, 0);
+    const randTarget = () => ({
+      x: W() * 0.08 + Math.random() * W() * 0.84,
+      y: H() * 0.1  + Math.random() * H() * 0.8,
+    });
 
-    const getPos = (layerIdx: number, nodeIdx: number): [number, number] => {
-      const totalLayers = LAYERS.length;
-      const x = ((layerIdx + 1) / (totalLayers + 1)) * W();
-      const count = LAYERS[layerIdx];
-      const y = ((nodeIdx + 1) / (count + 1)) * H();
-      return [x, y];
-    };
-
-    const edges: [number, number, number, number][] = [];
-    let offset = 0;
-    for (let li = 0; li < LAYERS.length - 1; li++) {
-      for (let ni = 0; ni < LAYERS[li]; ni++) {
-        for (let nj = 0; nj < LAYERS[li + 1]; nj++) {
-          edges.push([li, ni, li + 1, nj]);
-        }
-      }
-      offset += LAYERS[li];
-    }
-
+    const nodes: NodeItem[] = [];
+    const connections: { from: number; to: number }[] = [];
     const pulses: Pulse[] = [];
-    const spawnPulse = () => {
-      const ei = Math.floor(Math.random() * edges.length);
-      pulses.push({ edgeIdx: ei, t: 0, speed: 0.012 + Math.random() * 0.01, opacity: 0.6 + Math.random() * 0.4 });
-    };
 
-    let spawnTimer = 0;
+    const padX = W() * 0.18;
+    const layerGap = (W() - padX * 2) / (LAYER_DEF.length - 1);
+
+    LAYER_DEF.forEach((count, li) => {
+      const x = padX + layerGap * li;
+      const nodeGap = H() / (count + 1);
+      for (let ni = 0; ni < count; ni++) {
+        const ox = x, oy = nodeGap * (ni + 1);
+        const targets = Array.from({ length: 6 }, randTarget);
+        targets.unshift({ x: ox, y: oy });
+        nodes.push({
+          x: ox, y: oy,
+          tx: ox, ty: oy,
+          layer: li,
+          phase: Math.random() * Math.PI * 2,
+          shimSpeed: 0.008 + Math.random() * 0.006,
+          targets,
+          targetIdx: 0,
+          morphT: 0,
+          morphSpeed: 0.0012 + Math.random() * 0.001,
+          waitTimer: Math.random() * 300,
+        });
+      }
+    });
+
+    nodes.forEach((a, i) => {
+      nodes.forEach((b, j) => {
+        if (b.layer === a.layer + 1) connections.push({ from: i, to: j });
+      });
+    });
+
+    const spawnPulse = () => {
+      const c = connections[Math.floor(Math.random() * connections.length)];
+      if (!pulses.find(p => p.from === c.from && p.to === c.to && p.t < 0.1)) {
+        pulses.push({ from: c.from, to: c.to, t: 0 });
+      }
+    };
+    pulseTimer = setInterval(spawnPulse, 120);
+
+    const easeInOut = (t: number) => t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t;
 
     const draw = () => {
       ctx.clearRect(0, 0, W(), H());
-      tick += 0.008;
-      spawnTimer++;
 
-      if (spawnTimer % 6 === 0) spawnPulse();
+      // Update target positions
+      nodes.forEach(n => {
+        if (n.waitTimer > 0) { n.waitTimer--; }
+        else {
+          n.morphT += n.morphSpeed;
+          if (n.morphT >= 1) {
+            n.morphT = 0;
+            n.targetIdx = (n.targetIdx + 1) % n.targets.length;
+            if (Math.random() < 0.4) {
+              const ri = 1 + Math.floor(Math.random() * (n.targets.length - 1));
+              n.targets[ri] = randTarget();
+            }
+            n.waitTimer = 120 + Math.random() * 200;
+          }
+          const from = n.targets[n.targetIdx];
+          const to   = n.targets[(n.targetIdx + 1) % n.targets.length];
+          const e    = easeInOut(n.morphT);
+          n.tx = from.x + (to.x - from.x) * e;
+          n.ty = from.y + (to.y - from.y) * e;
+        }
+      });
 
-      for (const e of edges) {
-        const [li, ni, lj, nj] = e;
-        const [x1, y1] = getPos(li, ni);
-        const [x2, y2] = getPos(lj, nj);
-        const alpha = 0.04 + 0.04 * Math.sin(tick + li * 0.5 + ni * 0.3);
-        ctx.beginPath();
-        ctx.moveTo(x1, y1);
-        ctx.lineTo(x2, y2);
-        ctx.strokeStyle = `rgba(255,255,255,${alpha})`;
-        ctx.lineWidth = 0.7;
-        ctx.stroke();
+      // Repulsion — keep nodes apart
+      for (let i = 0; i < nodes.length; i++) {
+        for (let j = i + 1; j < nodes.length; j++) {
+          const a = nodes[i], b = nodes[j];
+          const dx = b.x - a.x, dy = b.y - a.y;
+          const dist = Math.sqrt(dx * dx + dy * dy) || 0.01;
+          if (dist < MIN_DIST) {
+            const force = (MIN_DIST - dist) / MIN_DIST * 0.5;
+            const nx = (dx / dist) * force, ny = (dy / dist) * force;
+            a.tx -= nx; a.ty -= ny;
+            b.tx += nx; b.ty += ny;
+          }
+        }
       }
 
+      // Clamp + lerp
+      nodes.forEach(n => {
+        n.tx = Math.max(20, Math.min(W() - 20, n.tx));
+        n.ty = Math.max(20, Math.min(H() - 20, n.ty));
+        n.x += (n.tx - n.x) * 0.03;
+        n.y += (n.ty - n.y) * 0.03;
+      });
+
+      // Lines
+      connections.forEach(c => {
+        const a = nodes[c.from], b = nodes[c.to];
+        ctx.beginPath();
+        ctx.moveTo(a.x, a.y);
+        ctx.lineTo(b.x, b.y);
+        ctx.strokeStyle = "rgba(255,255,255,0.18)";
+        ctx.lineWidth = 0.8;
+        ctx.stroke();
+      });
+
+      // Pulses
       for (let i = pulses.length - 1; i >= 0; i--) {
         const p = pulses[i];
-        p.t += p.speed;
-        if (p.t > 1) { pulses.splice(i, 1); continue; }
-
-        const [li, ni, lj, nj] = edges[p.edgeIdx];
-        const [x1, y1] = getPos(li, ni);
-        const [x2, y2] = getPos(lj, nj);
-        const px = x1 + (x2 - x1) * p.t;
-        const py = y1 + (y2 - y1) * p.t;
-
-        const grd = ctx.createRadialGradient(px, py, 0, px, py, 7);
-        grd.addColorStop(0, `rgba(255,255,255,${p.opacity})`);
-        grd.addColorStop(0.4, `rgba(255,255,255,${p.opacity * 0.4})`);
-        grd.addColorStop(1, "rgba(255,255,255,0)");
+        p.t += 0.008;
+        if (p.t >= 1) { pulses.splice(i, 1); continue; }
+        const a = nodes[p.from], b = nodes[p.to];
+        const px = a.x + (b.x - a.x) * p.t;
+        const py = a.y + (b.y - a.y) * p.t;
         ctx.beginPath();
-        ctx.arc(px, py, 7, 0, Math.PI * 2);
-        ctx.fillStyle = grd;
+        ctx.arc(px, py, 2.5, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(255,255,255,${Math.sin(p.t * Math.PI) * 0.9})`;
         ctx.fill();
       }
 
-      for (let li = 0; li < LAYERS.length; li++) {
-        for (let ni = 0; ni < LAYERS[li]; ni++) {
-          const [x, y] = getPos(li, ni);
-          const pulse = (Math.sin(tick * 1.3 + li * 0.8 + ni * 0.5) + 1) / 2;
-          const r = 3 + pulse * 2.5;
-
-          const grd = ctx.createRadialGradient(x, y, 0, x, y, r * 2.5);
-          grd.addColorStop(0, `rgba(255,255,255,${0.65 + pulse * 0.35})`);
-          grd.addColorStop(0.5, `rgba(255,255,255,${0.2 + pulse * 0.15})`);
-          grd.addColorStop(1, "rgba(255,255,255,0)");
-          ctx.beginPath();
-          ctx.arc(x, y, r, 0, Math.PI * 2);
-          ctx.fillStyle = grd;
-          ctx.fill();
-        }
-      }
+      // Nodes with dim & shine
+      nodes.forEach(n => {
+        n.phase += n.shimSpeed;
+        const glow = 0.5 + 0.5 * Math.sin(n.phase);
+        ctx.beginPath();
+        ctx.arc(n.x, n.y, 8 + 3 * glow, 0, Math.PI * 2);
+        ctx.strokeStyle = `rgba(255,255,255,${0.08 + 0.14 * glow})`;
+        ctx.lineWidth = 1;
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.arc(n.x, n.y, 4, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(255,255,255,${0.4 + 0.55 * glow})`;
+        ctx.fill();
+      });
 
       animId = requestAnimationFrame(draw);
     };
@@ -142,6 +200,7 @@ const AIPowerSection = () => {
 
     return () => {
       cancelAnimationFrame(animId);
+      clearInterval(pulseTimer);
       window.removeEventListener("resize", setup);
     };
   }, []);
@@ -170,7 +229,7 @@ const AIPowerSection = () => {
             </div>
             <canvas
               ref={canvasRef}
-              style={{ width: "100%", height: "100%", minHeight: 380, display: "block" }}
+              style={{ width: "100%", height: "100%", minHeight: 380, display: "block", background: "#000" }}
             />
           </div>
 
@@ -181,10 +240,10 @@ const AIPowerSection = () => {
             </div>
             <div className="flex flex-col gap-px bg-border">
               {[
-                { name: "QWS-ULTRA-V4", type: "Language · Reasoning", load: 94 },
-                { name: "QWS-VISION-3", type: "Image · Multimodal",   load: 78 },
-                { name: "QWS-CODE-X",   type: "Code · Synthesis",     load: 88 },
-                { name: "QWS-AUDIO-2",  type: "Speech · Music",       load: 61 },
+                { name: "QWS-ULTRA-V4", type: "Language · Reasoning",  load: 94 },
+                { name: "QWS-VISION-3", type: "Image · Multimodal",    load: 78 },
+                { name: "QWS-CODE-X",   type: "Code · Synthesis",      load: 88 },
+                { name: "QWS-AUDIO-2",  type: "Speech · Music",        load: 61 },
                 { name: "QWS-AGENT-1",  type: "Autonomous · Planning", load: 72 },
               ].map((model) => (
                 <div

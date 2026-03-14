@@ -8,31 +8,40 @@ const Footer = () => {
     {
       title: "PRODUCT",
       links: [
-        { label: "Generate", action: () => navigate("/generate") },
-        { label: "API Access", action: () => navigate("/docs") },
-        { label: "Pricing", action: () => document.querySelector("#pricing")?.scrollIntoView({ behavior: "smooth" }) },
-        { label: "Changelog", action: () => navigate("/docs") },
+        { label: "Generate",        path: "/generate" },
+        { label: "API Access",      path: "/docs" },
+        { label: "Pricing",         path: null, scroll: "#pricing" },
+        { label: "Changelog",       path: "/changelog" },
+        { label: "Upcoming Updates",path: "/upcoming" },
       ],
     },
     {
       title: "RESOURCES",
       links: [
-        { label: "Documentation", action: () => navigate("/docs") },
-        { label: "Tutorials", action: () => navigate("/docs") },
-        { label: "Blog", action: () => navigate("/about") },
-        { label: "Status", action: () => window.open("https://status.quickwebstack.dev", "_blank") },
+        { label: "Documentation",   path: "/docs" },
+        { label: "Tutorials",       path: "/tutorials" },
+        { label: "Blog",            path: "/blog" },
+        { label: "Status",          path: "/status" },
       ],
     },
     {
       title: "COMPANY",
       links: [
-        { label: "About", action: () => navigate("/about") },
-        { label: "Careers", action: () => navigate("/about") },
-        { label: "Contact", action: () => navigate("/about") },
-        { label: "Legal", action: () => navigate("/about") },
+        { label: "About",           path: "/about" },
+        { label: "Careers",         path: "/careers" },
+        { label: "Contact",         path: "/contact" },
+        { label: "Legal",           path: "/legal" },
       ],
     },
   ];
+
+  const handleLink = (path: string | null, scroll?: string) => {
+    if (scroll) {
+      document.querySelector(scroll)?.scrollIntoView({ behavior: "smooth" });
+    } else if (path) {
+      navigate(path);
+    }
+  };
 
   return (
     <footer className="border-t border-border py-16 px-6">
@@ -54,7 +63,7 @@ const Footer = () => {
                 {col.links.map((link) => (
                   <button
                     key={link.label}
-                    onClick={link.action}
+                    onClick={() => handleLink(link.path, (link as any).scroll)}
                     className="font-mono text-xs text-muted-foreground hover:text-foreground transition-colors text-left"
                   >
                     {link.label}

@@ -2,13 +2,6 @@ import { useNavigate } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
 import AnimatedLogo from "@/components/AnimatedLogo";
 
-const team = [
-  { name: "Alex Chen", role: "CEO & Co-Founder", bio: "Former ML Lead at OpenAI. Stanford CS PhD." },
-  { name: "Mia Russo", role: "CTO & Co-Founder", bio: "Built inference infrastructure at Scale AI." },
-  { name: "Sam Park", role: "Head of Research", bio: "10 years in generative model development." },
-  { name: "Jordan Kim", role: "VP of Product", bio: "Previously led product at Vercel and Linear." },
-];
-
 const About = () => {
   const navigate = useNavigate();
 
@@ -35,7 +28,7 @@ const About = () => {
             BUILDING THE<br />AI FUTURE
           </h1>
           <p className="font-mono text-sm text-muted-foreground max-w-2xl leading-relaxed">
-            QuickWebStack was founded in 2024 with a single mission: make the world's most powerful AI
+            QuickWebStack was founded in 2026 with a single mission: make the world's most powerful AI
             infrastructure accessible to every creator, developer, and business — at any scale.
           </p>
         </div>
@@ -46,8 +39,8 @@ const About = () => {
             <div className="font-mono text-[10px] tracking-[0.5em] uppercase mb-4 text-muted-foreground">MISSION</div>
             <h2 className="font-display text-3xl font-bold tracking-tight mb-6">DEMOCRATIZE AI GENERATION</h2>
             <p className="font-mono text-xs text-muted-foreground leading-relaxed">
-              We believe the best AI tools should be available to everyone — not just well-funded labs. 
-              Our infrastructure-first approach means developers get production-grade models without 
+              We believe the best AI tools should be available to everyone — not just well-funded labs.
+              Our infrastructure-first approach means developers get production-grade models without
               the complexity of managing GPU clusters or inference pipelines.
             </p>
           </div>
@@ -64,8 +57,8 @@ const About = () => {
         {/* Stats */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-px bg-border mb-24">
           {[
-            { value: "2024", label: "FOUNDED" },
-            { value: "10M+", label: "GENERATIONS" },
+            { value: "2026",  label: "FOUNDED" },
+            { value: "1M+",   label: "GENERATIONS" },
             { value: "180K+", label: "DEVELOPERS" },
             { value: "99.9%", label: "UPTIME" },
           ].map((s) => (
@@ -76,20 +69,58 @@ const About = () => {
           ))}
         </div>
 
-        {/* Team */}
+        {/* Founder */}
         <div className="mb-16">
-          <div className="font-mono text-xs tracking-[0.5em] uppercase mb-10 text-muted-foreground">TEAM</div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-px bg-border">
-            {team.map((member) => (
-              <div key={member.name} className="bg-background p-8">
-                <div className="w-12 h-12 border border-border flex items-center justify-center font-display text-xl font-bold mb-6">
-                  {member.name[0]}
-                </div>
-                <div className="font-display text-sm font-bold mb-1">{member.name}</div>
-                <div className="font-mono text-[10px] text-muted-foreground mb-3 tracking-wide">{member.role}</div>
-                <p className="font-mono text-xs text-muted-foreground leading-relaxed">{member.bio}</p>
+          <div className="font-mono text-xs tracking-[0.5em] uppercase mb-10 text-muted-foreground">FOUNDER</div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-px bg-border">
+
+            {/* Founder card */}
+            <div className="bg-foreground text-background p-10 md:p-12">
+              <div className="w-14 h-14 border border-background/30 flex items-center justify-center font-display text-2xl font-bold mb-8">
+                A
               </div>
-            ))}
+              <div className="font-display text-xl font-bold mb-1">Aarav Sahu</div>
+              <div className="font-mono text-[10px] tracking-widest opacity-60 mb-1 uppercase">CEO & Founder</div>
+              <div className="font-mono text-[10px] tracking-widest opacity-50 mb-6 uppercase">
+                Full Stack Developer · AI Engineer · 16 y/o
+              </div>
+              <p className="font-mono text-xs leading-relaxed opacity-75">
+                Built QuickWebStack solo at 16 — from the ground up. Designed, developed, and shipped
+                entirely with AI-assisted tooling. Passionate about making powerful AI infrastructure
+                accessible to every developer, regardless of age or resources.
+              </p>
+            </div>
+
+            {/* Solo build note */}
+            <div className="bg-background p-10 md:p-12 flex flex-col justify-between">
+              <div>
+                <div className="font-mono text-[10px] tracking-[0.5em] uppercase mb-4 text-muted-foreground">BUILT SOLO</div>
+                <h3 className="font-display text-2xl font-bold tracking-tight mb-6">
+                  ONE PERSON.<br />ONE PLATFORM.
+                </h3>
+                <p className="font-mono text-xs text-muted-foreground leading-relaxed mb-6">
+                  Every line of code, every design decision, every infrastructure choice — made by one
+                  16-year-old developer. QuickWebStack was designed and built entirely using AI-powered
+                  development tools, proving that the future of software is already here.
+                </p>
+                <p className="font-mono text-xs text-muted-foreground leading-relaxed">
+                  No team. No funding. Just curiosity, code, and AI.
+                </p>
+              </div>
+              <div className="mt-10 grid grid-cols-3 gap-px bg-border">
+                {[
+                  { value: "1",    label: "DEVELOPER" },
+                  { value: "100%", label: "AI-ASSISTED" },
+                  { value: "16",   label: "YEARS OLD" },
+                ].map((s) => (
+                  <div key={s.label} className="bg-background p-4 text-center">
+                    <div className="font-display text-xl font-bold mb-1">{s.value}</div>
+                    <div className="font-mono text-[9px] tracking-widest text-muted-foreground">{s.label}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
           </div>
         </div>
       </div>

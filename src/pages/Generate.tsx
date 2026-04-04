@@ -1,57 +1,40 @@
-import { useEffect, useState, useRef } from "react";
+import { useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowRight, Sparkles, ChevronDown } from "lucide-react";
+import { ArrowRight, Sparkles } from "lucide-react";
 import { generateWebsite } from "@/utils/codeGenerator";
 import AnimatedLogo from "@/components/AnimatedLogo";
+import { MODELS, type AgentModel } from "@/agents/models";
 
 const EXAMPLES = [
-  { label: "SaaS landing page", icon: "🚀" },
+  { label: "SaaS landing page",   icon: "🚀" },
   { label: "Developer portfolio", icon: "💼" },
   { label: "Analytics dashboard", icon: "📊" },
-  { label: "Online store", icon: "🛍️" },
-  { label: "Restaurant website", icon: "🍽️" },
-  { label: "Pricing page", icon: "💎" },
-  { label: "Blog homepage", icon: "✍️" },
-  { label: "Personal resume", icon: "📄" },
-];
-
-const MODELS = [
-  { id: "qws-ultra-v4", name: "QWS-ULTRA-V4", tag: "Language · Reasoning",  badge: "DEFAULT" },
-  { id: "qws-vision-3", name: "QWS-VISION-3", tag: "Image · Multimodal",    badge: "VISION"  },
-  { id: "qws-code-x",   name: "QWS-CODE-X",   tag: "Code · Synthesis",      badge: "CODE"    },
-  { id: "qws-audio-2",  name: "QWS-AUDIO-2",  tag: "Speech · Music",        badge: "AUDIO"   },
-  { id: "qws-agent-1",  name: "QWS-AGENT-1",  tag: "Autonomous · Planning", badge: "AGENT"   },
+  { label: "Online store",        icon: "🛍️" },
+  { label: "Restaurant website",  icon: "🍽️" },
+  { label: "Pricing page",        icon: "💎" },
+  { label: "Blog homepage",       icon: "✍️" },
+  { label: "Personal resume",     icon: "📄" },
 ];
 
 const Generate = () => {
   const navigate = useNavigate();
   const [prompt, setPrompt] = useState("");
   const [isBuilding, setIsBuilding] = useState(false);
-  const [selectedModel, setSelectedModel] = useState(MODELS[0]);
-  const [modelOpen, setModelOpen] = useState(false);
+  const [selectedModel, setSelectedModel] = useState<AgentModel>(MODELS[0]);
   const inputRef = useRef<HTMLTextAreaElement>(null);
-  const dropdownRef = useRef<HTMLDivElement>(null);
 
-  // Close dropdown when clicking anywhere outside the dropdown container
-  useEffect(() => {
-    const onDocClick = (e: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
-        setModelOpen(false);
-      }
-    };
-    document.addEventListener("mousedown", onDocClick);
-    return () => document.removeEventListener("mousedown", onDocClick);
-  }, []);
-
-  const selectModel = (m: typeof MODELS[0]) => {
+  const handleSelectModel = (m: AgentModel) => {
+    if (m.route && m.route !== "/generate") {
+      navigate(m.route);
+      return;
+    }
     setSelectedModel(m);
-    setModelOpen(false);
+    inputRef.current?.focus();
   };
 
   const handleBuild = () => {
     if (!prompt.trim() || isBuilding) return;
     setIsBuilding(true);
-    setModelOpen(false);
     setTimeout(() => {
       const code = generateWebsite(prompt);
       navigate("/workspace", {
@@ -86,106 +69,101 @@ const Generate = () => {
       </nav>
 
       {/* Hero */}
-      <div className="flex-1 flex flex-col items-center justify-center px-5 py-16">
-        <div className="flex items-center gap-2 mb-8 px-4 py-2 border border-border font-mono text-xs text-muted-foreground animate-fade-in">
+      <div className="flex-1 flex flex-col items-center justify-center px-5 py-10">
+        <div className="flex items-center gap-2 mb-6 px-4 py-2 border border-border font-mono text-xs text-muted-foreground animate-fade-in">
           <Sparkles size={11} />
-          AI-POWERED WEBSITE GENERATOR
+          AI-POWERED GENERATION SUITE
         </div>
 
         <h1
-          className="font-display font-bold tracking-tight text-center mb-5 max-w-3xl leading-none animate-slide-up"
-          style={{ fontSize: "clamp(2.5rem, 7vw, 6.5rem)" }}
+          className="font-display font-bold tracking-tight text-center mb-4 max-w-3xl leading-none animate-slide-up"
+          style={{ fontSize: "clamp(2.2rem, 6.5vw, 6rem)" }}
         >
           What do you want to{" "}
           <em style={{ fontStyle: "italic" }}>build?</em>
         </h1>
 
         <p
-          className="font-mono text-sm text-muted-foreground text-center max-w-md mb-10 leading-relaxed animate-slide-up"
+          className="font-mono text-sm text-muted-foreground text-center max-w-md mb-8 leading-relaxed animate-slide-up"
           style={{ animationDelay: "0.1s" }}
         >
-          Describe any website. Our AI generates a complete, beautiful,
-          fully-working site with live preview — instantly.
+          Pick an AI model then describe what you want — websites, presentations, code, audio, and more.
         </p>
 
-        {/* Model selector — all interaction lives inside dropdownRef */}
+        {/* ── MODEL CARD SELECTOR ── */}
         <div
-          ref={dropdownRef}
-          className="w-full max-w-2xl mb-3 animate-slide-up"
-          style={{ animationDelay: "0.12s", position: "relative", zIndex: 40 }}
+          className="w-full max-w-4xl mb-4 animate-slide-up"
+          style={{ animationDelay: "0.12s" }}
         >
-          {/* Trigger */}
-          <button
-            type="button"
-            onClick={() => setModelOpen((v) => !v)}
-            className="flex items-center justify-between w-full border border-border px-4 py-3 font-mono text-xs text-foreground hover:border-foreground transition-colors bg-background"
-            data-testid="model-selector"
+          <div className="font-mono text-[9px] tracking-[0.4em] uppercase text-muted-foreground mb-3">
+            SELECT MODEL — {MODELS.length} AVAILABLE
+          </div>
+          <div
+            className="grid gap-px"
+            style={{ gridTemplateColumns: `repeat(${MODELS.length}, minmax(0,1fr))` }}
           >
-            <div className="flex items-center gap-3">
-              <span className="border border-border px-1.5 py-0.5 text-[9px] tracking-widest text-muted-foreground">
-                {selectedModel.badge}
-              </span>
-              <span className="font-bold">{selectedModel.name}</span>
-              <span className="text-muted-foreground hidden sm:inline">{selectedModel.tag}</span>
-            </div>
-            <ChevronDown
-              size={13}
-              className={`text-muted-foreground transition-transform duration-200 ${modelOpen ? "rotate-180" : ""}`}
-            />
-          </button>
-
-          {/* Dropdown panel */}
-          {modelOpen && (
-            <div
-              className="absolute left-0 right-0 bg-background border border-border border-t-0"
-              style={{ top: "100%", zIndex: 50 }}
-            >
-              {MODELS.map((m) => (
+            {MODELS.map((m) => {
+              const isSelected = selectedModel.id === m.id;
+              const isRedirect = m.route && m.route !== "/generate";
+              return (
                 <button
                   key={m.id}
                   type="button"
-                  onClick={() => selectModel(m)}
-                  className={`flex items-center gap-3 w-full px-4 py-3 font-mono text-xs text-left transition-colors border-b border-border last:border-b-0 ${
-                    selectedModel.id === m.id
-                      ? "bg-foreground text-background"
-                      : "text-foreground hover:bg-foreground hover:text-background"
+                  onClick={() => handleSelectModel(m)}
+                  data-testid={`model-card-${m.id}`}
+                  className={`flex flex-col items-start p-3 border-b-2 transition-all duration-150 group ${
+                    isSelected
+                      ? "bg-foreground text-background border-foreground"
+                      : "bg-background text-foreground border-transparent hover:border-foreground/30"
                   }`}
-                  data-testid={`model-option-${m.id}`}
+                  style={isSelected ? {} : { borderColor: "transparent" }}
+                  title={m.desc}
                 >
-                  <span
-                    className={`border px-1.5 py-0.5 text-[9px] tracking-widest shrink-0 ${
-                      selectedModel.id === m.id
-                        ? "border-background/50 text-background"
-                        : "border-border text-muted-foreground"
-                    }`}
+                  <div
+                    className="text-base mb-2 leading-none"
+                    style={{ color: isSelected ? "var(--background)" : m.color }}
                   >
+                    {m.symbol}
+                  </div>
+                  <div className="font-mono text-[8px] font-bold tracking-widest truncate w-full">
                     {m.badge}
-                  </span>
-                  <span className="font-bold">{m.name}</span>
-                  <span
-                    className={`hidden sm:inline ${
-                      selectedModel.id === m.id ? "opacity-75" : "text-muted-foreground"
+                  </div>
+                  <div
+                    className={`font-mono text-[8px] mt-0.5 truncate w-full ${
+                      isSelected ? "opacity-70" : "text-muted-foreground"
                     }`}
                   >
-                    {m.tag}
-                  </span>
+                    {isRedirect ? "→ Launch" : m.tag.split(" · ")[0]}
+                  </div>
                 </button>
-              ))}
+              );
+            })}
+          </div>
+
+          {/* Selected model detail strip */}
+          <div className={`flex items-center gap-3 px-4 py-2.5 border border-t-0 border-border ${selectedModel ? "" : "opacity-0"}`}>
+            <div style={{ color: selectedModel.color }} className="text-sm">{selectedModel.symbol}</div>
+            <div>
+              <span className="font-mono text-xs font-bold">{selectedModel.name}</span>
+              <span className="font-mono text-xs text-muted-foreground ml-2">{selectedModel.tag}</span>
             </div>
-          )}
+            <div className="ml-auto font-mono text-[10px] text-muted-foreground hidden sm:block">
+              {selectedModel.desc}
+            </div>
+          </div>
         </div>
 
         {/* Main input box */}
         <div
-          className="w-full max-w-2xl border border-border focus-within:border-foreground transition-colors animate-slide-up"
-          style={{ animationDelay: "0.15s", position: "relative", zIndex: 10 }}
+          className="w-full max-w-4xl border border-border focus-within:border-foreground transition-colors animate-slide-up"
+          style={{ animationDelay: "0.16s" }}
         >
           <textarea
             ref={inputRef}
             value={prompt}
             onChange={(e) => setPrompt(e.target.value)}
             onKeyDown={handleKey}
-            placeholder="Describe the website you want to create..."
+            placeholder={`Describe what you want ${selectedModel.name} to generate...`}
             disabled={isBuilding}
             rows={3}
             className="w-full bg-background text-foreground font-mono text-sm p-5 resize-none outline-none border-0 placeholder:text-muted-foreground"
@@ -194,7 +172,7 @@ const Generate = () => {
           />
           <div className="flex items-center justify-between px-5 py-3 border-t border-border">
             <span className="font-mono text-[10px] text-muted-foreground">
-              Press Enter ↵ to build
+              Press Enter ↵ to build · Shift+Enter for new line
             </span>
             <button
               onClick={handleBuild}
@@ -209,13 +187,13 @@ const Generate = () => {
 
         {/* Example chips */}
         <div
-          className="flex flex-wrap gap-2 justify-center mt-8 max-w-xl animate-fade-in"
+          className="flex flex-wrap gap-2 justify-center mt-6 max-w-3xl animate-fade-in"
           style={{ animationDelay: "0.25s" }}
         >
           {EXAMPLES.map((ex) => (
             <button
               key={ex.label}
-              onClick={() => { setPrompt(ex.label); setModelOpen(false); inputRef.current?.focus(); }}
+              onClick={() => { setPrompt(ex.label); inputRef.current?.focus(); }}
               className="flex items-center gap-1.5 px-3 py-2 border border-border font-mono text-[11px] text-muted-foreground hover:text-foreground hover:border-foreground transition-colors"
               data-testid={`example-${ex.label.replace(/\s+/g, "-")}`}
             >
@@ -227,7 +205,7 @@ const Generate = () => {
 
       {/* Footer strip */}
       <div className="px-6 py-3 border-t border-border flex items-center justify-between">
-        <span className="font-mono text-[10px] text-muted-foreground">Powered by QuickWebStack AI</span>
+        <span className="font-mono text-[10px] text-muted-foreground">Powered by QuickWebStack AI · {MODELS.length} models available</span>
         <span className="font-mono text-[10px] text-muted-foreground hidden sm:block">No signup required · Free to use</span>
       </div>
     </div>

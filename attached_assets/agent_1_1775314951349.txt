@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Quick Web Stack — QWS Agent V1</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Playfair+Display:wght@500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --black:    #0a0a0a;
+    --white:    #f5f5f0;
+    --g100:     #1a1a1a;
+    --g200:     #2a2a2a;
+    --g300:     #3d3d3d;
+    --g400:     #6b6b6b;
+    --g500:     #9a9a9a;
+    --g600:     #c8c8c8;
+    --green:    #00e676;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--black);
+    font-family: 'DM Mono', monospace;
+    height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+  }
+
+  /* -- App shell -- */
+  .app {
+    width: 100vw;
+    max-width: 860px;
+    height: 100vh;
+    max-height: 700px;
+    display: flex;
+    border: 1px solid var(--g200);
+    overflow: hidden;
+  }
+
+  /* ------------------------
+     SIDEBAR
+  ------------------------ */
+  .sidebar {
+    width: 220px;
+    flex-shrink: 0;
+    background: var(--black);
+    border-right: 1px solid var(--g200);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .sb-top {
+    padding: 18px 16px 14px;
+    border-bottom: 1px solid var(--g200);
+  }
+
+  .sb-brand {
+    font-family: 'Playfair Display', serif;
+    font-size: 13px; font-weight: 700;
+    color: var(--white); letter-spacing: -.2px;
+  }
+
+  .sb-sub {
+    font-size: 9px; letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--g400); margin-top: 3px;
+  }
+
+  .new-btn {
+    margin: 12px 16px 0;
+    padding: 8px 12px;
+    background: var(--g200);
+    border: 1px solid var(--g300);
+    color: var(--white);
+    font-family: 'DM Mono', monospace;
+    font-size: 10px; letter-spacing: 1.5px;
+    text-transform: uppercase;
+    cursor: pointer;
+    display: flex; align-items: center; gap: 7px;
+    transition: background .15s;
+    width: calc(100% - 32px);
+  }
+
+  .new-btn:hover { background: var(--g300); }
+
+  .hist-label {
+    padding: 16px 16px 6px;
+    font-size: 9px; letter-spacing: 2.5px;
+    text-transform: uppercase; color: var(--g400);
+  }
+
+  .hist-list {
+    flex: 1; overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: var(--g300) transparent;
+  }
+
+  .hist-list::-webkit-scrollbar { width: 3px; }
+  .hist-list::-webkit-scrollbar-thumb { background: var(--g300); }
+
+  .hist-item {
+    padding: 9px 16px;
+    cursor: pointer;
+    border-left: 2px solid transparent;
+    transition: background .15s, border-color .15s;
+    display: flex; flex-direction: column; gap: 2px;
+  }
+
+  .hist-item:hover    { background: var(--g200); }
+  .hist-item.active   { background: var(--g100); border-left-color: var(--white); }
+
+  .hi-title {
+    font-size: 11px; color: var(--g500);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+
+  .hist-item:hover .hi-title,
+  .hist-item.active .hi-title { color: var(--white); }
+
+  .hi-time { font-size: 9px; color: var(--g400); }
+
+  .sb-foot {
+    padding: 12px 16px;
+    border-top: 1px solid var(--g200);
+    font-size: 9px; color: var(--g400); letter-spacing: 1px;
+  }
+
+  /* ------------------------
+     CHAT PANEL
+  ------------------------ */
+  .panel {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    background: var(--g100);
+  }
+
+  /* Header */
+  .hdr {
+    background: var(--black);
+    border-bottom: 1px solid var(--g200);
+    padding: 13px 18px;
+    display: flex; align-items: center; gap: 11px;
+    flex-shrink: 0;
+  }
+
+  .hav {
+    width: 38px; height: 38px;
+    background: var(--g100);
+    border: 1px solid var(--g300);
+    display: flex; align-items: center; justify-content: center;
+    position: relative; flex-shrink: 0;
+  }
+
+  .sdot {
+    position: absolute; bottom: -2px; right: -2px;
+    width: 9px; height: 9px;
+    background: var(--green);
+    border: 2px solid var(--black);
+    border-radius: 50%;
+    animation: pulse 2s ease-in-out infinite;
+  }
+
+  @keyframes pulse {
+    0%,100% { box-shadow: 0 0 0 0 rgba(0,230,118,.5); }
+    50%      { box-shadow: 0 0 0 5px rgba(0,230,118,0); }
+  }
+
+  .hname {
+    font-family: 'Playfair Display', serif;
+    font-size: 15px; font-weight: 500;
+    color: var(--white); letter-spacing: -.2px;
+  }
+
+  .hst {
+    display: flex; align-items: center; gap: 5px;
+    font-size: 9px; color: var(--green);
+    letter-spacing: 1.5px; text-transform: uppercase; margin-top: 2px;
+  }
+
+  .sbl {
+    width: 5px; height: 5px;
+    background: var(--green); border-radius: 50%;
+    animation: blink 1.4s ease-in-out infinite;
+  }
+
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:.2} }
+
+  /* Messages */
+  .msgs {
+    flex: 1;
+    background: #0f0f0f;
+    padding: 20px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    overflow-y: auto;
+    scroll-behavior: smooth;
+  }
+
+  .msgs::-webkit-scrollbar { width: 3px; }
+  .msgs::-webkit-scrollbar-thumb { background: var(--g300); }
+
+  .row {
+    display: flex; gap: 9px;
+    animation: msgIn .28s ease-out;
+  }
+
+  .row.user { flex-direction: row-reverse; }
+
+  @keyframes msgIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .av {
+    width: 28px; height: 28px;
+    flex-shrink: 0;
+    border: 1px solid var(--g300);
+    display: flex; align-items: center; justify-content: center;
+    margin-top: 2px;
+  }
+
+  .row.ai   .av { background: var(--g100); }
+  .row.user .av { background: var(--white); }
+
+  .bub {
+    padding: 10px 13px;
+    font-size: 12.5px; line-height: 1.7;
+    max-width: 75%;
+    border: 1px solid var(--g200);
+    word-break: break-word;
+  }
+
+  .row.ai   .bub { background: var(--g100); color: var(--white); }
+  .row.user .bub { background: var(--white); color: var(--black); border-color: var(--white); }
+
+  /* Typing dots */
+  .dots { display: flex; gap: 5px; align-items: center; padding: 3px 0; }
+  .dots span {
+    width: 5px; height: 5px; border-radius: 50%;
+    background: var(--g400);
+    animation: td 1.2s infinite;
+  }
+  .dots span:nth-child(2) { animation-delay: .2s; }
+  .dots span:nth-child(3) { animation-delay: .4s; }
+
+  @keyframes td {
+    0%,60%,100% { transform: translateY(0); opacity: .4; }
+    30%          { transform: translateY(-5px); opacity: 1; }
+  }
+
+  /* Input */
+  .input-wrap {
+    border-top: 1px solid var(--g200);
+    background: var(--black);
+    padding: 13px 16px;
+    display: flex; flex-direction: column; gap: 7px;
+    flex-shrink: 0;
+  }
+
+  .input-label {
+    font-size: 9px; letter-spacing: 2px;
+    text-transform: uppercase; color: var(--g400);
+  }
+
+  .input-row { display: flex; gap: 8px; align-items: flex-end; }
+
+  .user-input {
+    flex: 1;
+    background: var(--g100);
+    border: 1px solid var(--g300);
+    color: var(--white);
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    padding: 9px 12px;
+    outline: none; resize: none;
+    line-height: 1.5; max-height: 100px;
+    transition: border-color .15s;
+    scrollbar-width: none;
+  }
+
+  .user-input::placeholder { color: var(--g400); }
+  .user-input:focus        { border-color: var(--g500); }
+
+  .send-btn {
+    width: 36px; height: 36px;
+    background: var(--white);
+    border: none; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+    transition: background .15s;
+  }
+
+  .send-btn:hover    { background: var(--g600); }
+  .send-btn:disabled { background: var(--g300); cursor: not-allowed; }
+
+  .hint { font-size: 9px; color: var(--g400); letter-spacing: .5px; }
+</style>
+</head>
+<body>
+
+<div class="app">
+
+  <!-- -- Sidebar -- -->
+  <aside class="sidebar">
+    <div class="sb-top">
+      <div class="sb-brand">Quick Web Stack</div>
+      <div class="sb-sub">QWS Agent V1</div>
+    </div>
+
+    <button class="new-btn" onclick="newChat()">
+      <svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+        <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+      </svg>
+      New Chat
+    </button>
+
+    <div class="hist-label">Recent</div>
+    <div class="hist-list" id="histList"></div>
+    <div class="sb-foot">© 2026 Quick Web Stack</div>
+  </aside>
+
+  <!-- -- Chat panel -- -->
+  <div class="panel">
+
+    <div class="hdr">
+      <div class="hav">
+        <svg width="16" height="16" fill="none" stroke="#c8c8c8" stroke-width="1.5" viewBox="0 0 24 24">
+          <rect x="2" y="7" width="20" height="14" rx="1"/>
+          <path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/>
+          <line x1="12" y1="12" x2="12" y2="16"/>
+          <line x1="10" y1="14" x2="14" y2="14"/>
+        </svg>
+        <div class="sdot"></div>
+      </div>
+      <div>
+        <div class="hname">QWS Agent V1</div>
+        <div class="hst"><span class="sbl"></span> Active</div>
+      </div>
+    </div>
+
+    <div class="msgs" id="msgs"></div>
+
+    <div class="input-wrap">
+      <div class="input-label">Describe your problem</div>
+      <div class="input-row">
+        <textarea class="user-input" id="userInput" rows="1" placeholder="e.g. I need a booking system for my salon..."></textarea>
+        <button class="send-btn" id="sendBtn" onclick="sendMsg()">
+          <svg width="13" height="13" fill="none" stroke="#0a0a0a" stroke-width="2.2" viewBox="0 0 24 24">
+            <line x1="22" y1="2" x2="11" y2="13"/>
+            <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+          </svg>
+        </button>
+      </div>
+      <div class="hint">Enter to send &nbsp;·&nbsp; Shift+Enter for new line</div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  const msgsEl    = document.getElementById('msgs');
+  const inputEl   = document.getElementById('userInput');
+  const sendBtn   = document.getElementById('sendBtn');
+  const histListEl = document.getElementById('histList');
+
+  const BOT_SVG = `<svg width="13" height="13" fill="none" stroke="#c8c8c8" stroke-width="1.5" viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="14" rx="1"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/><line x1="12" y1="12" x2="12" y2="16"/><line x1="10" y1="14" x2="14" y2="14"/></svg>`;
+  const USR_SVG = `<svg width="13" height="13" fill="none" stroke="#0a0a0a" stroke-width="1.5" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>`;
+
+  let sessions  = [];   // [{id, title, time, apiHistory, domSnap}]
+  let activeId  = null;
+  let busy      = false;
+
+  /* -- Utilities -- */
+  function nowTime() {
+    const d = new Date();
+    return d.getHours().toString().padStart(2,'0') + ':' + d.getMinutes().toString().padStart(2,'0');
+  }
+
+  function activeSession() { return sessions.find(s => s.id === activeId); }
+
+  function snapDOM() {
+    const s = activeSession();
+    if (s) s.domSnap = msgsEl.innerHTML;
+  }
+
+  /* -- Sidebar render -- */
+  function renderSidebar() {
+    histListEl.innerHTML = '';
+    [...sessions].reverse().forEach(s => {
+      const div = document.createElement('div');
+      div.className = 'hist-item' + (s.id === activeId ? ' active' : '');
+      div.innerHTML = `<span class="hi-title">${s.title}</span><span class="hi-time">${s.time}</span>`;
+      div.onclick = () => switchSession(s.id);
+      histListEl.appendChild(div);
+    });
+  }
+
+  /* -- Session switching -- */
+  function switchSession(id) {
+    snapDOM();
+    activeId = id;
+    const s = activeSession();
+    msgsEl.innerHTML = s.domSnap || welcomeHTML();
+    msgsEl.scrollTop = msgsEl.scrollHeight;
+    renderSidebar();
+  }
+
+  /* -- New chat -- */
+  function newChat() {
+    snapDOM();
+    const id = Date.now();
+    sessions.push({ id, title: 'New Chat', time: nowTime(), apiHistory: [], domSnap: welcomeHTML() });
+    activeId = id;
+    msgsEl.innerHTML = welcomeHTML();
+    renderSidebar();
+    inputEl.focus();
+  }
+
+  function welcomeHTML() {
+    return `<div class="row ai"><div class="av">${BOT_SVG}</div><div class="bub">Hi there! I'm QWS Agent V1 — tell me your problem and I'll help you solve it.</div></div>`;
+  }
+
+  /* -- Message helpers -- */
+  function appendMsg(role, text) {
+    const row = document.createElement('div');
+    row.className = 'row ' + role;
+    row.innerHTML = `<div class="av">${role === 'ai' ? BOT_SVG : USR_SVG}</div><div class="bub">${text.replace(/\n/g,'<br>')}</div>`;
+    msgsEl.appendChild(row);
+    msgsEl.scrollTop = msgsEl.scrollHeight;
+  }
+
+  function showTyping() {
+    const row = document.createElement('div');
+    row.className = 'row ai'; row.id = 'typing';
+    row.innerHTML = `<div class="av">${BOT_SVG}</div><div class="bub"><div class="dots"><span></span><span></span><span></span></div></div>`;
+    msgsEl.appendChild(row);
+    msgsEl.scrollTop = msgsEl.scrollHeight;
+  }
+
+  function removeTyping() { document.getElementById('typing')?.remove(); }
+
+  /* -- Send -- */
+  inputEl.addEventListener('input', () => {
+    inputEl.style.height = 'auto';
+    inputEl.style.height = Math.min(inputEl.scrollHeight, 100) + 'px';
+  });
+
+  inputEl.addEventListener('keydown', e => {
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMsg(); }
+  });
+
+  async function sendMsg() {
+    const text = inputEl.value.trim();
+    if (!text || busy) return;
+    busy = true;
+    sendBtn.disabled = true;
+    inputEl.value = '';
+    inputEl.style.height = 'auto';
+
+    const sess = activeSession();
+
+    // Auto-title from first user message
+    if (sess.apiHistory.length === 0) {
+      sess.title = text.length > 26 ? text.slice(0, 26) + '…' : text;
+    }
+
+    appendMsg('user', text);
+    sess.apiHistory.push({ role: 'user', content: text });
+    showTyping();
+    snapDOM();
+    renderSidebar();
+
+    try {
+      const res = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          model: 'claude-sonnet-4-20250514',
+          max_tokens: 1000,
+          system: 'You are QWS Agent V1, the AI assistant for Quick Web Stack. Help users with their web development problems clearly and concisely.',
+          messages: sess.apiHistory
+        })
+      });
+      const data = await res.json();
+      removeTyping();
+      const reply = data.content?.[0]?.text || "Sorry, I couldn't respond.";
+      sess.apiHistory.push({ role: 'assistant', content: reply });
+      appendMsg('ai', reply);
+    } catch {
+      removeTyping();
+      appendMsg('ai', 'Something went wrong. Please try again.');
+    }
+
+    snapDOM();
+    busy = false;
+    sendBtn.disabled = false;
+    inputEl.focus();
+  }
+
+  /* -- Init -- */
+  (function init() {
+    const id = Date.now();
+    sessions.push({ id, title: 'New Chat', time: nowTime(), apiHistory: [], domSnap: welcomeHTML() });
+    activeId = id;
+    msgsEl.innerHTML = welcomeHTML();
+    renderSidebar();
+  })();
+</script>
+</body>
+</html>

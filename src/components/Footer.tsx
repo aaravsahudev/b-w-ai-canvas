@@ -8,11 +8,12 @@ const Footer = () => {
     {
       title: "PRODUCT",
       links: [
-        { label: "Generate",        path: "/generate" },
-        { label: "API Access",      path: "/docs" },
-        { label: "Pricing",         path: null, scroll: "#pricing" },
-        { label: "Changelog",       path: "/changelog" },
-        { label: "Upcoming Updates",path: "/upcoming" },
+        { label: "Generate",         path: "/generate" },
+        { label: "Presentations",    path: "/presentation" },
+        { label: "API Access",       path: "/docs" },
+        { label: "Pricing",          path: null, scroll: "#pricing" },
+        { label: "Changelog",        path: "/changelog" },
+        { label: "Upcoming Updates", path: "/upcoming" },
       ],
     },
     {

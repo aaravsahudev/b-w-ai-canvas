@@ -19,6 +19,7 @@ import Status from "./pages/Status.tsx";
 import Careers from "./pages/Careers.tsx";
 import Contact from "./pages/Contact.tsx";
 import Legal from "./pages/Legal.tsx";
+import PresentationAgent from "./pages/PresentationAgent.tsx";
 import NotFound from "./pages/NotFound.tsx";
 
 const queryClient = new QueryClient();
@@ -56,8 +57,9 @@ const AppRoutes = () => {
         <Route path="/status"     element={<Status />} />
         <Route path="/careers"    element={<Careers />} />
         <Route path="/contact"    element={<Contact />} />
-        <Route path="/legal"      element={<Legal />} />
-        <Route path="*"           element={<NotFound />} />
+        <Route path="/legal"         element={<Legal />} />
+        <Route path="/presentation" element={<PresentationAgent />} />
+        <Route path="*"             element={<NotFound />} />
       </Routes>
     </PageTransition>
   );

@@ -16,11 +16,11 @@ const EXAMPLES = [
 ];
 
 const MODELS = [
-  { id: "qws-ultra-v4",  name: "QWS-ULTRA-V4",  tag: "Language · Reasoning",  badge: "DEFAULT" },
-  { id: "qws-vision-3",  name: "QWS-VISION-3",  tag: "Image · Multimodal",    badge: "VISION" },
-  { id: "qws-code-x",    name: "QWS-CODE-X",    tag: "Code · Synthesis",      badge: "CODE" },
-  { id: "qws-audio-2",   name: "QWS-AUDIO-2",   tag: "Speech · Music",        badge: "AUDIO" },
-  { id: "qws-agent-1",   name: "QWS-AGENT-1",   tag: "Autonomous · Planning", badge: "AGENT" },
+  { id: "qws-ultra-v4", name: "QWS-ULTRA-V4", tag: "Language · Reasoning",  badge: "DEFAULT" },
+  { id: "qws-vision-3", name: "QWS-VISION-3", tag: "Image · Multimodal",    badge: "VISION"  },
+  { id: "qws-code-x",   name: "QWS-CODE-X",   tag: "Code · Synthesis",      badge: "CODE"    },
+  { id: "qws-audio-2",  name: "QWS-AUDIO-2",  tag: "Speech · Music",        badge: "AUDIO"   },
+  { id: "qws-agent-1",  name: "QWS-AGENT-1",  tag: "Autonomous · Planning", badge: "AGENT"   },
 ];
 
 const Generate = () => {
@@ -30,10 +30,28 @@ const Generate = () => {
   const [selectedModel, setSelectedModel] = useState(MODELS[0]);
   const [modelOpen, setModelOpen] = useState(false);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // Close dropdown when clicking anywhere outside the dropdown container
+  useEffect(() => {
+    const onDocClick = (e: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setModelOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", onDocClick);
+    return () => document.removeEventListener("mousedown", onDocClick);
+  }, []);
+
+  const selectModel = (m: typeof MODELS[0]) => {
+    setSelectedModel(m);
+    setModelOpen(false);
+  };
 
   const handleBuild = () => {
     if (!prompt.trim() || isBuilding) return;
     setIsBuilding(true);
+    setModelOpen(false);
     setTimeout(() => {
       const code = generateWebsite(prompt);
       navigate("/workspace", {
@@ -90,15 +108,16 @@ const Generate = () => {
           fully-working site with live preview — instantly.
         </p>
 
-        {/* Model selector */}
+        {/* Model selector — all interaction lives inside dropdownRef */}
         <div
-          className="w-full max-w-2xl mb-3 animate-slide-up relative z-30"
-          style={{ animationDelay: "0.12s" }}
-          data-model-dropdown
+          ref={dropdownRef}
+          className="w-full max-w-2xl mb-3 animate-slide-up"
+          style={{ animationDelay: "0.12s", position: "relative", zIndex: 40 }}
         >
+          {/* Trigger */}
           <button
+            type="button"
             onClick={() => setModelOpen((v) => !v)}
-            onBlur={() => setTimeout(() => setModelOpen(false), 120)}
             className="flex items-center justify-between w-full border border-border px-4 py-3 font-mono text-xs text-foreground hover:border-foreground transition-colors bg-background"
             data-testid="model-selector"
           >
@@ -109,28 +128,45 @@ const Generate = () => {
               <span className="font-bold">{selectedModel.name}</span>
               <span className="text-muted-foreground hidden sm:inline">{selectedModel.tag}</span>
             </div>
-            <ChevronDown size={13} className={`text-muted-foreground transition-transform ${modelOpen ? "rotate-180" : ""}`} />
+            <ChevronDown
+              size={13}
+              className={`text-muted-foreground transition-transform duration-200 ${modelOpen ? "rotate-180" : ""}`}
+            />
           </button>
 
+          {/* Dropdown panel */}
           {modelOpen && (
-            <div className="absolute top-full left-0 right-0 z-50 border border-border border-t-0 bg-background shadow-lg">
+            <div
+              className="absolute left-0 right-0 bg-background border border-border border-t-0"
+              style={{ top: "100%", zIndex: 50 }}
+            >
               {MODELS.map((m) => (
                 <button
                   key={m.id}
-                  onMouseDown={(e) => e.preventDefault()}
-                  onClick={() => { setSelectedModel(m); setModelOpen(false); }}
-                  className={`flex items-center gap-3 w-full px-4 py-3 font-mono text-xs text-left hover:bg-foreground hover:text-background transition-colors border-b border-border last:border-b-0 ${
-                    selectedModel.id === m.id ? "bg-foreground text-background" : "text-foreground"
+                  type="button"
+                  onClick={() => selectModel(m)}
+                  className={`flex items-center gap-3 w-full px-4 py-3 font-mono text-xs text-left transition-colors border-b border-border last:border-b-0 ${
+                    selectedModel.id === m.id
+                      ? "bg-foreground text-background"
+                      : "text-foreground hover:bg-foreground hover:text-background"
                   }`}
                   data-testid={`model-option-${m.id}`}
                 >
-                  <span className={`border px-1.5 py-0.5 text-[9px] tracking-widest shrink-0 ${
-                    selectedModel.id === m.id ? "border-background text-background" : "border-border text-muted-foreground"
-                  }`}>
+                  <span
+                    className={`border px-1.5 py-0.5 text-[9px] tracking-widest shrink-0 ${
+                      selectedModel.id === m.id
+                        ? "border-background/50 text-background"
+                        : "border-border text-muted-foreground"
+                    }`}
+                  >
                     {m.badge}
                   </span>
                   <span className="font-bold">{m.name}</span>
-                  <span className={`hidden sm:inline ${selectedModel.id === m.id ? "opacity-75" : "text-muted-foreground"}`}>
+                  <span
+                    className={`hidden sm:inline ${
+                      selectedModel.id === m.id ? "opacity-75" : "text-muted-foreground"
+                    }`}
+                  >
                     {m.tag}
                   </span>
                 </button>
@@ -141,8 +177,8 @@ const Generate = () => {
 
         {/* Main input box */}
         <div
-          className="w-full max-w-2xl border border-border focus-within:border-foreground transition-colors animate-slide-up relative z-10"
-          style={{ animationDelay: "0.15s" }}
+          className="w-full max-w-2xl border border-border focus-within:border-foreground transition-colors animate-slide-up"
+          style={{ animationDelay: "0.15s", position: "relative", zIndex: 10 }}
         >
           <textarea
             ref={inputRef}
@@ -179,7 +215,7 @@ const Generate = () => {
           {EXAMPLES.map((ex) => (
             <button
               key={ex.label}
-              onClick={() => { setPrompt(ex.label); inputRef.current?.focus(); setModelOpen(false); }}
+              onClick={() => { setPrompt(ex.label); setModelOpen(false); inputRef.current?.focus(); }}
               className="flex items-center gap-1.5 px-3 py-2 border border-border font-mono text-[11px] text-muted-foreground hover:text-foreground hover:border-foreground transition-colors"
               data-testid={`example-${ex.label.replace(/\s+/g, "-")}`}
             >

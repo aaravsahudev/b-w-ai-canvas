@@ -10,6 +10,7 @@ const Footer = () => {
       links: [
         { label: "Generate",         path: "/generate" },
         { label: "Presentations",    path: "/presentation" },
+        { label: "Business Intel",   path: "/business" },
         { label: "API Access",       path: "/docs" },
         { label: "Pricing",          path: null, scroll: "#pricing" },
         { label: "Changelog",        path: "/changelog" },

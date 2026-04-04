@@ -1,36 +1,35 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowRight, Sparkles } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import { generateWebsite } from "@/utils/codeGenerator";
 import AnimatedLogo from "@/components/AnimatedLogo";
 import { MODELS, type AgentModel } from "@/agents/models";
-
-const EXAMPLES = [
-  { label: "SaaS landing page",   icon: "🚀" },
-  { label: "Developer portfolio", icon: "💼" },
-  { label: "Analytics dashboard", icon: "📊" },
-  { label: "Online store",        icon: "🛍️" },
-  { label: "Restaurant website",  icon: "🍽️" },
-  { label: "Pricing page",        icon: "💎" },
-  { label: "Blog homepage",       icon: "✍️" },
-  { label: "Personal resume",     icon: "📄" },
-];
 
 const Generate = () => {
   const navigate = useNavigate();
   const [prompt, setPrompt] = useState("");
   const [isBuilding, setIsBuilding] = useState(false);
   const [selectedModel, setSelectedModel] = useState<AgentModel>(MODELS[0]);
+  const [prevModel, setPrevModel] = useState<AgentModel | null>(null);
+  const [animating, setAnimating] = useState(false);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+  const contentRef = useRef<HTMLDivElement>(null);
 
-  const handleSelectModel = (m: AgentModel) => {
+  const acc = selectedModel.color;
+
+  const handleSelectModel = useCallback((m: AgentModel) => {
+    if (m.id === selectedModel.id) return;
     if (m.route && m.route !== "/generate") {
       navigate(m.route);
       return;
     }
+    setPrevModel(selectedModel);
+    setAnimating(true);
     setSelectedModel(m);
-    inputRef.current?.focus();
-  };
+    setPrompt("");
+    setTimeout(() => setAnimating(false), 380);
+    setTimeout(() => inputRef.current?.focus(), 50);
+  }, [selectedModel, navigate]);
 
   const handleBuild = () => {
     if (!prompt.trim() || isBuilding) return;
@@ -54,54 +53,71 @@ const Generate = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background text-foreground flex flex-col">
-      {/* Top nav */}
-      <nav className="flex items-center justify-between px-6 py-4 border-b border-border shrink-0">
-        <div className="cursor-pointer" onClick={() => navigate("/home")}>
-          <AnimatedLogo size={34} />
-        </div>
-        <div className="flex items-center gap-3">
-          <button className="font-mono text-xs text-muted-foreground hover:text-foreground transition-colors hidden sm:block">
-            Sign in
-          </button>
-          <button className="btn-primary text-xs px-5 py-2.5">Get started</button>
-        </div>
-      </nav>
+    <>
+      <style>{`
+        @keyframes modelIn {
+          0%  { opacity: 0; transform: translateY(12px) scale(0.99); }
+          100%{ opacity: 1; transform: translateY(0)  scale(1); }
+        }
+        @keyframes scanFlash {
+          0%  { opacity: 0; transform: translateX(-100%); }
+          40% { opacity: 1; }
+          100%{ opacity: 0; transform: translateX(100%); }
+        }
+        @keyframes bgPulse {
+          0%  { opacity: 0; }
+          50% { opacity: 1; }
+          100%{ opacity: 0; }
+        }
+        .model-in { animation: modelIn 0.36s cubic-bezier(0.22,1,0.36,1) both; }
+      `}</style>
 
-      {/* Hero */}
-      <div className="flex-1 flex flex-col items-center justify-center px-5 py-10">
-        <div className="flex items-center gap-2 mb-6 px-4 py-2 border border-border font-mono text-xs text-muted-foreground animate-fade-in">
-          <Sparkles size={11} />
-          AI-POWERED GENERATION SUITE
-        </div>
+      {/* Full-page background glow — changes with model */}
+      <div
+        className="fixed inset-0 pointer-events-none transition-all duration-500"
+        style={{
+          background: `radial-gradient(ellipse 60% 40% at 50% 0%, ${acc}18, transparent 65%)`,
+        }}
+      />
 
-        <h1
-          className="font-display font-bold tracking-tight text-center mb-4 max-w-3xl leading-none animate-slide-up"
-          style={{ fontSize: "clamp(2.2rem, 6.5vw, 6rem)" }}
-        >
-          What do you want to{" "}
-          <em style={{ fontStyle: "italic" }}>build?</em>
-        </h1>
-
-        <p
-          className="font-mono text-sm text-muted-foreground text-center max-w-md mb-8 leading-relaxed animate-slide-up"
-          style={{ animationDelay: "0.1s" }}
-        >
-          Pick an AI model then describe what you want — websites, presentations, code, audio, and more.
-        </p>
-
-        {/* ── MODEL CARD SELECTOR ── */}
+      {/* Scan flash on model switch */}
+      {animating && (
         <div
-          className="w-full max-w-4xl mb-4 animate-slide-up"
-          style={{ animationDelay: "0.12s" }}
-        >
-          <div className="font-mono text-[9px] tracking-[0.4em] uppercase text-muted-foreground mb-3">
-            SELECT MODEL — {MODELS.length} AVAILABLE
+          className="fixed top-0 left-0 right-0 h-0.5 pointer-events-none z-50"
+          style={{
+            background: `linear-gradient(90deg, transparent, ${acc}, transparent)`,
+            animation: "scanFlash 0.38s ease-out both",
+          }}
+        />
+      )}
+
+      <div className="min-h-screen flex flex-col relative z-10">
+        {/* Nav */}
+        <nav className="flex items-center justify-between px-6 py-4 border-b border-border shrink-0 bg-background/90 backdrop-blur-sm">
+          <div className="cursor-pointer" onClick={() => navigate("/home")}>
+            <AnimatedLogo size={34} />
           </div>
-          <div
-            className="grid gap-px"
-            style={{ gridTemplateColumns: `repeat(${MODELS.length}, minmax(0,1fr))` }}
-          >
+          <div className="flex items-center gap-4">
+            <span
+              className="font-mono text-[10px] tracking-[0.3em] uppercase transition-colors duration-500"
+              style={{ color: acc }}
+            >
+              {selectedModel.name}
+            </span>
+            <button
+              onClick={handleBuild}
+              disabled={!prompt.trim() || isBuilding}
+              className="font-mono text-xs px-5 py-2.5 font-bold transition-all duration-300 disabled:opacity-30 disabled:cursor-not-allowed"
+              style={{ background: acc, color: "#000" }}
+            >
+              {isBuilding ? "Building…" : selectedModel.cta}
+            </button>
+          </div>
+        </nav>
+
+        {/* ── MODEL STRIP ── */}
+        <div className="border-b border-border bg-background/60 backdrop-blur-sm">
+          <div className="flex overflow-x-auto">
             {MODELS.map((m) => {
               const isSelected = selectedModel.id === m.id;
               const isRedirect = m.route && m.route !== "/generate";
@@ -111,104 +127,174 @@ const Generate = () => {
                   type="button"
                   onClick={() => handleSelectModel(m)}
                   data-testid={`model-card-${m.id}`}
-                  className={`flex flex-col items-start p-3 border-b-2 transition-all duration-150 group ${
-                    isSelected
-                      ? "bg-foreground text-background border-foreground"
-                      : "bg-background text-foreground border-transparent hover:border-foreground/30"
-                  }`}
-                  style={isSelected ? {} : { borderColor: "transparent" }}
-                  title={m.desc}
+                  className="flex-1 min-w-[80px] flex flex-col items-center py-3 px-2 gap-1.5 relative transition-all duration-200 group shrink-0"
+                  style={{
+                    background: isSelected ? `${m.color}14` : "transparent",
+                  }}
                 >
+                  {/* Active bar */}
                   <div
-                    className="text-base mb-2 leading-none"
-                    style={{ color: isSelected ? "var(--background)" : m.color }}
+                    className="absolute top-0 left-0 right-0 h-0.5 transition-all duration-300"
+                    style={{ background: isSelected ? m.color : "transparent" }}
+                  />
+
+                  {/* Symbol */}
+                  <div
+                    className="text-lg leading-none transition-all duration-300"
+                    style={{
+                      color: isSelected ? m.color : "hsl(var(--muted-foreground)/0.5)",
+                      textShadow: isSelected ? `0 0 12px ${m.color}80` : "none",
+                      transform: isSelected ? "scale(1.15)" : "scale(1)",
+                    }}
                   >
                     {m.symbol}
                   </div>
-                  <div className="font-mono text-[8px] font-bold tracking-widest truncate w-full">
+
+                  {/* Badge */}
+                  <div
+                    className="font-mono font-bold leading-none transition-colors duration-300"
+                    style={{
+                      fontSize: 7,
+                      letterSpacing: "0.12em",
+                      color: isSelected ? m.color : "hsl(var(--muted-foreground)/0.4)",
+                    }}
+                  >
                     {m.badge}
                   </div>
-                  <div
-                    className={`font-mono text-[8px] mt-0.5 truncate w-full ${
-                      isSelected ? "opacity-70" : "text-muted-foreground"
-                    }`}
-                  >
-                    {isRedirect ? "→ Launch" : m.tag.split(" · ")[0]}
-                  </div>
+
+                  {/* Redirect indicator */}
+                  {isRedirect && (
+                    <div className="font-mono text-[6px] text-muted-foreground/30 group-hover:text-muted-foreground transition-colors">
+                      ↗
+                    </div>
+                  )}
                 </button>
               );
             })}
           </div>
+        </div>
 
-          {/* Selected model detail strip */}
-          <div className={`flex items-center gap-3 px-4 py-2.5 border border-t-0 border-border ${selectedModel ? "" : "opacity-0"}`}>
-            <div style={{ color: selectedModel.color }} className="text-sm">{selectedModel.symbol}</div>
-            <div>
-              <span className="font-mono text-xs font-bold">{selectedModel.name}</span>
-              <span className="font-mono text-xs text-muted-foreground ml-2">{selectedModel.tag}</span>
+        {/* ── MAIN CONTENT ── animates on model switch */}
+        <div
+          ref={contentRef}
+          key={selectedModel.id}
+          className="flex-1 flex flex-col items-center justify-center px-5 py-10 model-in"
+        >
+          {/* Model identity pill */}
+          <div
+            className="flex items-center gap-2.5 mb-8 px-4 py-2 border transition-all duration-500"
+            style={{ borderColor: `${acc}40`, background: `${acc}08` }}
+          >
+            <div className="text-base leading-none" style={{ color: acc, textShadow: `0 0 10px ${acc}60` }}>
+              {selectedModel.symbol}
             </div>
-            <div className="ml-auto font-mono text-[10px] text-muted-foreground hidden sm:block">
-              {selectedModel.desc}
+            <div className="font-mono text-[10px] tracking-[0.35em] uppercase" style={{ color: acc }}>
+              {selectedModel.name}
             </div>
+            <div className="w-px h-3 bg-current opacity-20" style={{ color: acc }} />
+            <div className="font-mono text-[10px] tracking-widest text-muted-foreground uppercase">
+              {selectedModel.tag}
+            </div>
+          </div>
+
+          {/* Heading — changes verb with model */}
+          <h1
+            className="font-display font-bold tracking-tight text-center mb-4 max-w-3xl leading-none"
+            style={{ fontSize: "clamp(2.2rem, 6.5vw, 5.5rem)" }}
+          >
+            What do you want to{" "}
+            <em style={{ fontStyle: "italic", color: acc, textShadow: `0 0 30px ${acc}40`, transition: "color 0.4s, text-shadow 0.4s" }}>
+              {selectedModel.verb}?
+            </em>
+          </h1>
+
+          <p className="font-mono text-sm text-muted-foreground text-center max-w-md mb-8 leading-relaxed">
+            {selectedModel.desc}
+          </p>
+
+          {/* ── INPUT BOX ── */}
+          <div
+            className="w-full max-w-3xl mb-6 transition-all duration-400"
+            style={{
+              borderColor: `${acc}40`,
+              boxShadow: `0 0 0 1px ${acc}20`,
+              border: `1px solid ${acc}30`,
+            }}
+          >
+            <textarea
+              ref={inputRef}
+              value={prompt}
+              onChange={(e) => setPrompt(e.target.value)}
+              onKeyDown={handleKey}
+              placeholder={`Describe what you want ${selectedModel.name} to ${selectedModel.verb}...`}
+              disabled={isBuilding}
+              rows={3}
+              className="w-full bg-background text-foreground font-mono text-sm p-5 resize-none outline-none border-0 placeholder:text-muted-foreground"
+              style={{ caretColor: acc }}
+              data-testid="main-prompt-input"
+            />
+            <div
+              className="flex items-center justify-between px-5 py-3 border-t transition-colors duration-400"
+              style={{ borderColor: `${acc}20` }}
+            >
+              <span className="font-mono text-[10px] text-muted-foreground">
+                Enter ↵ to {selectedModel.verb} · Shift+Enter for new line
+              </span>
+              <button
+                onClick={handleBuild}
+                disabled={!prompt.trim() || isBuilding}
+                className="flex items-center gap-2 font-mono text-xs px-5 py-2.5 font-bold transition-all duration-300 disabled:opacity-25 disabled:cursor-not-allowed"
+                style={{ background: prompt.trim() ? acc : "transparent", color: prompt.trim() ? "#000" : acc, border: `1px solid ${acc}60` }}
+                data-testid="build-button"
+              >
+                {isBuilding ? "Working…" : <>{selectedModel.cta} <ArrowRight size={13} /></>}
+              </button>
+            </div>
+          </div>
+
+          {/* ── EXAMPLE CHIPS ── model-specific ── */}
+          <div className="flex flex-wrap gap-2 justify-center max-w-3xl">
+            {selectedModel.examples.map((ex) => (
+              <button
+                key={ex.label}
+                onClick={() => { setPrompt(ex.label); inputRef.current?.focus(); }}
+                className="flex items-center gap-1.5 px-3 py-2 border font-mono text-[11px] text-muted-foreground transition-all duration-200"
+                style={{ borderColor: "hsl(var(--border))" }}
+                onMouseEnter={(e) => {
+                  (e.currentTarget as HTMLElement).style.borderColor = `${acc}60`;
+                  (e.currentTarget as HTMLElement).style.color = acc;
+                  (e.currentTarget as HTMLElement).style.background = `${acc}08`;
+                }}
+                onMouseLeave={(e) => {
+                  (e.currentTarget as HTMLElement).style.borderColor = "hsl(var(--border))";
+                  (e.currentTarget as HTMLElement).style.color = "";
+                  (e.currentTarget as HTMLElement).style.background = "";
+                }}
+                data-testid={`example-${ex.label.replace(/\s+/g, "-")}`}
+              >
+                <span>{ex.icon}</span>{ex.label}
+              </button>
+            ))}
           </div>
         </div>
 
-        {/* Main input box */}
+        {/* ── BOTTOM STATUS BAR ── */}
         <div
-          className="w-full max-w-4xl border border-border focus-within:border-foreground transition-colors animate-slide-up"
-          style={{ animationDelay: "0.16s" }}
+          className="px-6 py-2.5 border-t flex items-center justify-between transition-all duration-500"
+          style={{ borderColor: `${acc}20` }}
         >
-          <textarea
-            ref={inputRef}
-            value={prompt}
-            onChange={(e) => setPrompt(e.target.value)}
-            onKeyDown={handleKey}
-            placeholder={`Describe what you want ${selectedModel.name} to generate...`}
-            disabled={isBuilding}
-            rows={3}
-            className="w-full bg-background text-foreground font-mono text-sm p-5 resize-none outline-none border-0 placeholder:text-muted-foreground"
-            style={{ caretColor: "hsl(var(--foreground))" }}
-            data-testid="main-prompt-input"
-          />
-          <div className="flex items-center justify-between px-5 py-3 border-t border-border">
+          <div className="flex items-center gap-3">
+            <div className="w-1.5 h-1.5 rounded-full" style={{ background: acc, boxShadow: `0 0 6px ${acc}` }} />
             <span className="font-mono text-[10px] text-muted-foreground">
-              Press Enter ↵ to build · Shift+Enter for new line
+              {selectedModel.name} · {selectedModel.tag}
             </span>
-            <button
-              onClick={handleBuild}
-              disabled={!prompt.trim() || isBuilding}
-              className="btn-primary text-xs px-5 py-2.5 gap-2 disabled:opacity-20 disabled:cursor-not-allowed"
-              data-testid="build-button"
-            >
-              {isBuilding ? "Building..." : <><span>Build it</span> <ArrowRight size={13} /></>}
-            </button>
           </div>
-        </div>
-
-        {/* Example chips */}
-        <div
-          className="flex flex-wrap gap-2 justify-center mt-6 max-w-3xl animate-fade-in"
-          style={{ animationDelay: "0.25s" }}
-        >
-          {EXAMPLES.map((ex) => (
-            <button
-              key={ex.label}
-              onClick={() => { setPrompt(ex.label); inputRef.current?.focus(); }}
-              className="flex items-center gap-1.5 px-3 py-2 border border-border font-mono text-[11px] text-muted-foreground hover:text-foreground hover:border-foreground transition-colors"
-              data-testid={`example-${ex.label.replace(/\s+/g, "-")}`}
-            >
-              <span>{ex.icon}</span>{ex.label}
-            </button>
-          ))}
+          <span className="font-mono text-[10px] text-muted-foreground hidden sm:block">
+            {MODELS.length} models · QuickWebStack AI
+          </span>
         </div>
       </div>
-
-      {/* Footer strip */}
-      <div className="px-6 py-3 border-t border-border flex items-center justify-between">
-        <span className="font-mono text-[10px] text-muted-foreground">Powered by QuickWebStack AI · {MODELS.length} models available</span>
-        <span className="font-mono text-[10px] text-muted-foreground hidden sm:block">No signup required · Free to use</span>
-      </div>
-    </div>
+    </>
   );
 };
 

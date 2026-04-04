@@ -1,492 +1,599 @@
-import { useState, useEffect } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, ArrowRight, Download, Copy, CheckCheck } from "lucide-react";
 import AnimatedLogo from "@/components/AnimatedLogo";
 
-type PageState = "home" | "config" | "generating" | "report";
+/* ─── TYPES ─────────────────────────────────────────────── */
+type Mode = "idea" | "financial";
+type Page = "home" | "generating" | "report";
 
-type AnalysisType = "swot" | "market" | "financial" | "competitive" | "full";
-
-const ANALYSIS_TYPES: { value: AnalysisType; label: string; desc: string; icon: string }[] = [
-  { value: "swot",        label: "SWOT Analysis",          desc: "Strengths, weaknesses, opportunities & threats", icon: "🧩" },
-  { value: "market",      label: "Market Research",         desc: "Market size, TAM/SAM/SOM, growth trends",        icon: "📊" },
-  { value: "financial",   label: "Financial Projections",   desc: "Revenue model, cost structure, P&L forecast",    icon: "💰" },
-  { value: "competitive", label: "Competitive Analysis",    desc: "Competitor landscape, positioning, moat",        icon: "⚔️" },
-  { value: "full",        label: "Full Business Report",    desc: "Complete 360° intelligence briefing",            icon: "📋" },
-];
-
-interface KPI { label: string; value: string; change: string; up: boolean }
-interface SwotItem { text: string }
-interface Swot { strengths: SwotItem[]; weaknesses: SwotItem[]; opportunities: SwotItem[]; threats: SwotItem[] }
-interface Competitor { name: string; strength: number; focus: string }
-interface ChartBar { label: string; value: number }
+interface Metric { label: string; value: string; sub: string }
+interface FinCard { label: string; value: string; sub: string }
+interface Rival { name: string; founded: string; stage: string; threat: number; funding: string; growth: string; employees: string; revenue: string; strength: string; weakness: string }
+interface RiskBar { name: string; score: number }
 interface Report {
-  company: string;
-  type: AnalysisType;
-  overview: string;
-  kpis: KPI[];
-  swot: Swot;
-  competitors: Competitor[];
-  chartData: ChartBar[];
-  recommendations: string[];
-  risks: string[];
-  executiveSummary: string;
+  name: string; tagline: string; desc: string;
+  metrics: Metric[]; fins: FinCard[];
+  rivals: Rival[]; risks: RiskBar[];
+  swot: { s: string[]; w: string[]; o: string[]; t: string[] };
+  chartBars: { label: string; value: number }[];
+  recs: string[];
+  execSummary: string;
 }
 
-const STEPS = [
-  "Scanning market intelligence",
-  "Running SWOT framework",
-  "Modeling financial projections",
-  "Mapping competitive landscape",
-  "Compiling executive briefing",
-];
+/* ─── DATA ──────────────────────────────────────────────── */
+const SECTORS = ["All","FinTech","HealthTech","EdTech","Climate Tech","AI / ML","Web3 / Crypto","B2B SaaS","Consumer Apps","Deep Tech","Logistics","AgriTech","PropTech","LegalTech","HRTech","SpaceTech"];
+const STEPS_GEN = ["Analysing market signals…","Modelling competitive moat…","Running financial projections…","Mapping risk matrix…","Compiling executive briefing…"];
 
-function rnd(min: number, max: number) {
-  return Math.floor(Math.random() * (max - min + 1)) + min;
-}
+function rnd(a: number, b: number) { return Math.floor(Math.random() * (b - a + 1)) + a; }
+function delay(ms: number) { return new Promise(r => setTimeout(r, ms)); }
 
-function sign(up: boolean) { return up ? "+" : "-"; }
+function buildReport(prompt: string, sector: string): Report {
+  const words = prompt.split(/\s+/);
+  const name = words.slice(0, 2).map(w => w[0]?.toUpperCase() + w.slice(1)).join("") + (sector ? `.${sector.split(" ")[0]}` : ".AI");
+  const ind = sector || "Technology";
 
-function generateReport(prompt: string, industry: string, type: AnalysisType): Report {
-  const words = prompt.split(/\s+/).filter(Boolean);
-  const company = words.slice(0, 3).map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(" ");
-  const ind = industry || "Technology";
-
-  const up1 = rnd(0, 1) === 1;
-  const up2 = rnd(0, 1) === 1;
-  const up3 = true;
-  const up4 = rnd(0, 1) === 1;
+  const rivals: Rival[] = [
+    { name:"Nexora Labs",  founded:"2019", stage:"Series B", threat: rnd(70,92), funding:`$${rnd(40,120)}M`, growth:`+${rnd(80,200)}% YoY`, employees:`${rnd(80,300)}`, revenue:`$${rnd(8,30)}M ARR`, strength:"Broad enterprise adoption",    weakness:"Slow product iteration cycle" },
+    { name:"Aurum Systems",founded:"2021", stage:"Series A", threat: rnd(48,70), funding:`$${rnd(15,45)}M`,  growth:`+${rnd(40,100)}% YoY`, employees:`${rnd(30,80)}`,  revenue:`$${rnd(2,9)}M ARR`,  strength:"AI-native architecture",        weakness:"Limited go-to-market reach" },
+    { name:"Vanta Corp",   founded:"2020", stage:"Seed",     threat: rnd(28,50), funding:`$${rnd(3,15)}M`,   growth:`+${rnd(20,60)}% YoY`,  employees:`${rnd(10,35)}`,  revenue:`$${rnd(0.5,3)}M ARR`, strength:"Niche vertical focus",         weakness:"Undifferentiated pricing" },
+  ];
 
   return {
-    company,
-    type,
-    overview: `${company} operates in the ${ind} sector, targeting a rapidly expanding addressable market. The business demonstrates ${up3 ? "strong" : "moderate"} fundamentals with clear differentiation potential. Based on current market vectors and competitive dynamics, the outlook is ${up3 ? "cautiously optimistic" : "mixed"}.`,
-    kpis: [
-      { label: "Market TAM", value: `$${rnd(2, 48)}B`,    change: `${sign(up1)}${rnd(8, 34)}%`, up: up1 },
-      { label: "Growth Rate", value: `${rnd(12, 68)}%`,   change: `${sign(up2)}${rnd(2, 18)}pp`, up: up2 },
-      { label: "Revenue Est.", value: `$${rnd(1, 12)}M`,  change: `${sign(up3)}${rnd(15, 55)}%`, up: up3 },
-      { label: "Margin Potential", value: `${rnd(18, 62)}%`, change: `${sign(up4)}${rnd(2, 12)}pp`, up: up4 },
+    name,
+    tagline: `Redefining ${ind} through intelligent automation and precision data`,
+    desc: `${name} operates at the intersection of ${ind} and next-generation AI infrastructure. The venture targets an underserved segment characterised by high fragmentation, outdated tooling, and a measurable willingness-to-pay among enterprise decision-makers. With a capital-efficient GTM motion and a proprietary data moat, the company is positioned for asymmetric upside.`,
+    execSummary: `${name} presents a compelling investment thesis within the ${ind} vertical. Early validation metrics signal strong product-market fit, with a TAM trajectory supporting a $${rnd(2,8)}B+ outcome at full penetration. The primary risk vector is competitive commoditisation, mitigated by the company's proprietary dataset and sticky workflow integrations. Recommended: proceed to diligence with priority focus on unit economics and retention cohorts.`,
+    metrics: [
+      { label: "Market TAM",    value: `$${rnd(4,48)}B`,   sub: `${ind} addressable market 2026E` },
+      { label: "Revenue Run Rate",value:`$${rnd(1,12)}M`,  sub: `+${rnd(40,180)}% YoY growth` },
+      { label: "Projected Margin",value:`${rnd(22,68)}%`,  sub: `Gross margin at scale` },
     ],
+    fins: [
+      { label:"Seed Round Target", value:`$${rnd(1,4)}M`,    sub:`Pre-seed / Seed bridge` },
+      { label:"18-mo Runway",      value:`${rnd(14,24)} mo`, sub:`At current burn rate` },
+      { label:"Break-even",        value:`Mo ${rnd(18,36)}`, sub:`Conservative projection` },
+      { label:"5Y IRR Target",     value:`${rnd(28,55)}×`,   sub:`Venture return multiple` },
+    ],
+    rivals,
     swot: {
-      strengths: [
-        { text: `Strong product-market fit in the ${ind} space with differentiated positioning` },
-        { text: `Experienced team with deep domain expertise in core ${ind.toLowerCase()} operations` },
-        { text: "First-mover advantage in a rapidly emerging sub-category with high barriers to entry" },
-      ],
-      weaknesses: [
-        { text: "Limited brand awareness compared to established incumbents in the space" },
-        { text: "Dependency on a small number of key customers creates revenue concentration risk" },
-        { text: "Current infrastructure requires significant investment to scale to next growth phase" },
-      ],
-      opportunities: [
-        { text: `${ind} market projected to grow at ${rnd(14, 32)}% CAGR through 2028 — white space available` },
-        { text: "Regulatory tailwinds and enterprise digitization trends align with core product value prop" },
-        { text: `Partnership potential with complementary ${ind.toLowerCase()} platforms to accelerate distribution` },
-      ],
-      threats: [
-        { text: "Big tech players have begun entering adjacent market segments with bundled solutions" },
-        { text: `Macroeconomic headwinds may delay enterprise budget approvals in Q3–Q4 ${new Date().getFullYear()}` },
-        { text: "Talent competition for senior engineers and GTM executives remains intense and costly" },
-      ],
+      s: [`Proprietary ${ind} dataset with ${rnd(2,10)}M+ data points — durable competitive moat`, `Founding team combines ${rnd(8,20)} years ${ind} domain expertise with elite engineering talent`, `First-mover position in a niche sub-vertical with high switching costs`],
+      w: ["Limited brand awareness versus incumbents; requires significant GTM investment", `Customer concentration risk: top ${rnd(2,5)} accounts represent ${rnd(40,65)}% of ARR`, "Infrastructure scaling costs may compress margins in growth phase prior to Series A"],
+      o: [`${ind} regulatory tailwinds in EU/APAC creating immediate demand for compliant solutions`, `Platform expansion opportunity: ${rnd(3,7)} adjacent verticals are addressable with minor product pivots`, `Enterprise software budget migration from legacy systems accelerating post-2024`],
+      t: ["Big tech incumbents (AWS, Google, Microsoft) eyeing the space with bundled alternatives", `Macroeconomic tightening may elongate enterprise sales cycles through ${new Date().getFullYear() + 1}`, "Talent market remains hyper-competitive for senior ML engineers and GTM leaders"],
     },
-    competitors: [
-      { name: "Market Leader A", strength: rnd(75, 92), focus: "Enterprise scale" },
-      { name: "Challenger B",   strength: rnd(55, 74), focus: "SMB segment" },
-      { name: "Disruptor C",    strength: rnd(38, 58), focus: "AI-native" },
-      { name: company,          strength: rnd(40, 65), focus: "Differentiated niche" },
-    ],
-    chartData: [
-      { label: "2022", value: rnd(12, 25) },
-      { label: "2023", value: rnd(24, 40) },
-      { label: "2024", value: rnd(38, 58) },
-      { label: "2025E",value: rnd(52, 78) },
-      { label: "2026E",value: rnd(68, 95) },
-      { label: "2027E",value: rnd(80, 99) },
-    ],
-    recommendations: [
-      `Prioritize ${ind} enterprise sales motion — ICP shows highest LTV and lowest churn`,
-      "Invest in a content and community flywheel to reduce CAC by 30–40% over 18 months",
-      "Explore strategic partnerships with 2–3 complementary platforms for accelerated distribution",
-      `File IP protection for core ${ind.toLowerCase()} technology before entering new geographies`,
+    chartBars: [
+      { label:"2023",   value: rnd(10,20) },
+      { label:"2024",   value: rnd(22,38) },
+      { label:"2025",   value: rnd(40,58) },
+      { label:"2026E",  value: rnd(55,75) },
+      { label:"2027E",  value: rnd(68,88) },
+      { label:"2028E",  value: rnd(80,99) },
     ],
     risks: [
-      "Market concentration: avoid over-reliance on single verticals or customer segments",
-      `${ind} regulatory changes could require rapid product adaptation — monitor EMEA/APAC closely`,
-      "Burn rate vs. revenue growth requires close monitoring — maintain 18+ months runway",
+      { name:"Market Risk",        score: rnd(25,55) },
+      { name:"Execution Risk",     score: rnd(35,60) },
+      { name:"Competitive Risk",   score: rnd(45,70) },
+      { name:"Regulatory Risk",    score: rnd(18,48) },
+      { name:"Funding Risk",       score: rnd(20,50) },
     ],
-    executiveSummary: `${company} is positioned to capture meaningful share of the ${ind} market through a combination of strong product differentiation and emerging go-to-market traction. The primary strategic priority is scaling the enterprise sales engine while protecting the core innovation moat. Near-term risks are manageable with disciplined execution. Recommended course: accelerate growth investment while maintaining operational efficiency targets.`,
+    recs: [
+      `Accelerate product-led growth: launch a free tier targeting ${rnd(500,2000)} sign-ups in 90 days`,
+      `File provisional IP on core ${ind.toLowerCase()} inference engine before entering US/EU markets`,
+      `Hire a VP of Sales with ${ind} vertical experience in the next 60 days — critical for Series A narrative`,
+      `Establish 2–3 design-partner contracts with named enterprise logos to de-risk diligence`,
+    ],
   };
 }
 
+/* ─── ROW ANIMATION WRAPPER ─────────────────────────────── */
+function Row({ children, delay: d = 0, className = "" }: { children: React.ReactNode; delay?: number; className?: string }) {
+  return (
+    <div
+      className={`biz-row ${className}`}
+      style={{ "--row-delay": `${d}s` } as React.CSSProperties}
+    >
+      <div className="biz-row-sweep" />
+      {children}
+    </div>
+  );
+}
+
+/* ─── THREAT COLOR ───────────────────────────────────────── */
+function threatColor(v: number) {
+  if (v >= 75) return "#e04040";
+  if (v >= 55) return "#d4a843";
+  return "#34c97a";
+}
+
+/* ─── MAIN COMPONENT ─────────────────────────────────────── */
 export default function BusinessAnalysis() {
   const navigate = useNavigate();
-  const [page, setPage] = useState<PageState>("home");
+  const [mode, setMode] = useState<Mode>("idea");
+  const [page, setPage] = useState<Page>("home");
+  const [sector, setSector] = useState("");
   const [prompt, setPrompt] = useState("");
-  const [industry, setIndustry] = useState("");
-  const [analysisType, setAnalysisType] = useState<AnalysisType>("full");
-  const [report, setReport] = useState<Report | null>(null);
   const [stepIdx, setStepIdx] = useState(-1);
-  const [copied, setCopied] = useState(false);
-
-  const ACC = "#22d3ee";
+  const [report, setReport] = useState<Report | null>(null);
+  const [advisorOpen, setAdvisorOpen] = useState(false);
+  const [chatInput, setChatInput] = useState("");
+  const [messages, setMessages] = useState<{ role: "user"|"ai"; text: string }[]>([]);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   const generate = async () => {
+    if (!prompt.trim()) return;
     setPage("generating");
-    for (let i = 0; i < STEPS.length; i++) {
+    for (let i = 0; i < STEPS_GEN.length; i++) {
       setStepIdx(i);
-      await delay(520 + i * 80);
+      await delay(480 + i * 90);
     }
-    const r = generateReport(prompt, industry, analysisType);
+    const r = buildReport(prompt, sector);
     setReport(r);
     setPage("report");
     setStepIdx(-1);
   };
 
-  const copyReport = () => {
-    if (!report) return;
-    const text = [
-      `# ${report.company} — Business Intelligence Report`,
-      `\n## Executive Summary\n${report.executiveSummary}`,
-      `\n## SWOT Analysis`,
-      `### Strengths\n${report.swot.strengths.map(s => `• ${s.text}`).join("\n")}`,
-      `### Weaknesses\n${report.swot.weaknesses.map(s => `• ${s.text}`).join("\n")}`,
-      `### Opportunities\n${report.swot.opportunities.map(s => `• ${s.text}`).join("\n")}`,
-      `### Threats\n${report.swot.threats.map(s => `• ${s.text}`).join("\n")}`,
-      `\n## Recommendations\n${report.recommendations.map(r => `• ${r}`).join("\n")}`,
-      `\n## Key Risks\n${report.risks.map(r => `• ${r}`).join("\n")}`,
-    ].join("\n");
-    navigator.clipboard.writeText(text);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+  const sendChat = () => {
+    if (!chatInput.trim()) return;
+    const q = chatInput.trim();
+    setChatInput("");
+    setMessages(m => [...m, { role: "user", text: q }]);
+    setTimeout(() => {
+      setMessages(m => [...m, { role: "ai", text: `Based on the intelligence report for ${report?.name || "this venture"}, ${q.toLowerCase().includes("risk") ? "the primary risks are execution speed and competitive commoditisation. I recommend maintaining an 18-month runway buffer." : q.toLowerCase().includes("fund") ? "a Series A at a $12–18M round size is achievable after hitting $1.5M ARR with strong retention cohorts." : "the outlook is cautiously optimistic. Focus on narrowing the ICP and optimising CAC payback below 12 months."}` }]);
+    }, 900);
   };
 
+  /* ── GOLD ACCENT ── */
+  const G = "#c8a96e";
+  const GD = "#7a6030";
+
   return (
-    <div className="min-h-screen bg-background text-foreground flex flex-col" style={{ "--biz-acc": ACC } as React.CSSProperties}>
-      {/* Nav */}
-      <nav className="fixed top-0 left-0 right-0 z-40 border-b border-border bg-background flex items-center justify-between px-6 h-16">
-        <div className="cursor-pointer" onClick={() => navigate("/home")}>
+    <div style={{ minHeight: "100vh", background: "#0c0c0e", color: "#f7f5f0", fontFamily: "'JetBrains Mono', 'DM Mono', monospace", position: "relative", overflow: "hidden" }}>
+
+      {/* ── GLOBAL CSS ── */}
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400;1,600&family=DM+Mono:ital,wght@0,300;0,400;1,300&display=swap');
+
+        /* grain */
+        .biz-grain { position:fixed;inset:0;z-index:9990;pointer-events:none;opacity:.022;
+          background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"); }
+
+        /* grid lines bg */
+        .biz-grid { position:fixed;inset:0;pointer-events:none;z-index:0;
+          background-image:repeating-linear-gradient(0deg,transparent,transparent 79px,rgba(200,169,110,.04) 79px,rgba(200,169,110,.04) 80px),
+            repeating-linear-gradient(90deg,transparent,transparent 79px,rgba(200,169,110,.02) 79px,rgba(200,169,110,.02) 80px); }
+
+        /* row sweep animation */
+        @keyframes rowIn { from{opacity:0;transform:translateY(18px)} to{opacity:1;transform:translateY(0)} }
+        @keyframes sweepGold { 0%{transform:translateX(-100%);opacity:0} 40%{opacity:1} 100%{transform:translateX(200%);opacity:0} }
+        @keyframes goldShimmer { 0%{background-position:-200% center} 100%{background-position:200% center} }
+        @keyframes rowGlow { 0%,100%{box-shadow:0 0 0 0 rgba(200,169,110,0)} 50%{box-shadow:0 0 24px 0 rgba(200,169,110,.04)} }
+        @keyframes barGrow { from{width:0} to{width:var(--bar-w)} }
+        @keyframes threatGrow { from{width:0} to{width:var(--threat-w)} }
+        @keyframes pulse { 0%,100%{opacity:.7} 50%{opacity:.2} }
+        @keyframes spin { to{transform:rotate(360deg)} }
+        @keyframes msgIn { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:translateY(0)} }
+        @keyframes sectionFade { from{opacity:0} to{opacity:1} }
+
+        .biz-row {
+          position:relative;overflow:hidden;
+          animation:rowIn .55s cubic-bezier(.22,1,.36,1) both;
+          animation-delay:var(--row-delay,0s);
+        }
+        .biz-row-sweep {
+          position:absolute;top:0;left:0;right:0;height:1px;
+          background:linear-gradient(90deg,transparent,rgba(200,169,110,.4),transparent);
+          animation:sweepGold 5s ease-in-out infinite;
+          animation-delay:var(--row-delay,0s);
+          pointer-events:none;z-index:10;
+        }
+
+        .gold-text { background:linear-gradient(90deg,#7a6030 0%,#f0d080 35%,#c8a96e 50%,#f0d080 65%,#7a6030 100%);background-size:200% auto;-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;animation:goldShimmer 4s linear infinite; }
+
+        .serif { font-family:'Cormorant Garamond',serif; }
+
+        /* section cards */
+        .biz-card { background:#141418;border:1px solid #252529;padding:22px 24px;position:relative;overflow:hidden; animation:rowGlow 6s ease-in-out infinite; }
+        .biz-card::before { content:'';position:absolute;left:0;top:0;bottom:0;width:2px;background:linear-gradient(180deg,rgba(200,169,110,.6),transparent); }
+
+        /* threat bar */
+        .threat-fill { height:100%;position:absolute;left:0;top:0;animation:threatGrow 1.2s cubic-bezier(.22,1,.36,1) forwards; }
+
+        /* advisor panel */
+        .advisor-panel { width:0;overflow:hidden;flex-shrink:0;display:flex;flex-direction:column;background:#141418;border-left:1px solid transparent;transition:width .4s cubic-bezier(.22,1,.36,1),border-color .4s; }
+        .advisor-panel.open { width:400px;border-color:rgba(255,255,255,.06); }
+
+        /* sector pills */
+        .spill { font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:#4a4a55;border:1px solid #252529;background:transparent;padding:5px 12px;cursor:pointer;transition:all .18s;white-space:nowrap; }
+        .spill:hover { border-color:rgba(200,169,110,.4);color:#c8a96e;background:rgba(200,169,110,.05); }
+        .spill.active { border-color:#c8a96e;color:#0c0c0e;background:#c8a96e; }
+
+        /* risk bar */
+        .rb-fill { height:100%;width:0;animation:barGrow .9s cubic-bezier(.22,1,.36,1) forwards;animation-delay:var(--row-delay,.1s); }
+
+        /* msg */
+        .chat-msg { animation:msgIn .28s ease; }
+      `}</style>
+
+      {/* grain + grid */}
+      <div className="biz-grain" />
+      <div className="biz-grid" />
+
+      {/* ── NAV ── */}
+      <header style={{ position:"fixed",top:0,left:0,right:0,zIndex:300,height:58,padding:"0 28px",display:"flex",alignItems:"center",justifyContent:"space-between",background:"rgba(12,12,14,.95)",borderBottom:"1px solid rgba(255,255,255,.055)",backdropFilter:"blur(22px)" }}>
+        <div style={{ cursor:"pointer" }} onClick={() => navigate("/home")}>
           <AnimatedLogo size={26} />
         </div>
-        <div className="flex items-center gap-3">
-          {page !== "home" && (
-            <button
-              onClick={() => setPage(page === "report" ? "config" : "home")}
-              className="flex items-center gap-2 font-mono text-xs text-muted-foreground hover:text-foreground transition-colors"
-            >
-              <ArrowLeft size={13} /> Back
+
+        {/* Mode toggle */}
+        <div style={{ display:"flex",background:"#141418",border:"1px solid rgba(255,255,255,.07)",borderRadius:100,padding:3,gap:2,position:"relative" }}>
+          <div style={{ position:"absolute",top:3,bottom:3,width:"calc(50% - 3px)",background:"#f7f5f0",borderRadius:100,transition:"transform .35s cubic-bezier(.34,1.56,.64,1)",transform:mode==="financial"?"translateX(calc(100% + 2px))":"none",pointerEvents:"none" }} />
+          {(["idea","financial"] as Mode[]).map(m => (
+            <button key={m} onClick={() => setMode(m)} style={{ position:"relative",zIndex:1,fontFamily:"'JetBrains Mono',monospace",fontSize:10,letterSpacing:".12em",textTransform:"uppercase",padding:"8px 18px",border:"none",background:"transparent",color:mode===m?"#0c0c0e":"#4a4a55",borderRadius:100,cursor:"pointer",transition:"color .2s",whiteSpace:"nowrap" }}>
+              {m === "idea" ? "Startup Ideas" : "Financial Analysis"}
+            </button>
+          ))}
+        </div>
+
+        <div style={{ display:"flex",alignItems:"center",gap:8 }}>
+          <span style={{ fontFamily:"'JetBrains Mono',monospace",fontSize:9,letterSpacing:".3em",textTransform:"uppercase",color:G }}>QWS-BIZ-4</span>
+          {page === "report" && (
+            <button onClick={() => setAdvisorOpen(o => !o)} style={{ height:34,display:"flex",alignItems:"center",gap:9,padding:"0 14px",background:"transparent",border:`1px solid rgba(200,169,110,.35)`,color:G,fontFamily:"'JetBrains Mono',monospace",fontSize:10,letterSpacing:".12em",textTransform:"uppercase",cursor:"pointer",transition:"all .2s" }}>
+              <div style={{ width:6,height:6,borderRadius:"50%",background:G,opacity:.7,animation:"pulse 2s infinite" }} />
+              Advisor
             </button>
           )}
-          <span className="font-mono text-[10px] tracking-widest border px-2 py-1" style={{ borderColor: `${ACC}40`, color: ACC }}>
-            QWS-BIZ-4
-          </span>
         </div>
-      </nav>
+      </header>
 
-      <div className="flex-1 pt-16">
+      {/* ── MAIN CANVAS ── */}
+      <div style={{ display:"flex",height:"100vh",paddingTop:58,position:"relative",zIndex:1 }}>
 
-        {/* ── HOME ── */}
-        {page === "home" && (
-          <div className="flex flex-col items-center justify-center min-h-[calc(100vh-4rem)] px-5 py-16"
-            style={{ background: `radial-gradient(ellipse 70% 45% at 50% 0%, ${ACC}12, transparent 60%)` }}>
-            <div className="font-mono text-[10px] tracking-[0.5em] uppercase mb-4" style={{ color: ACC }}>
-              BUSINESS INTELLIGENCE ENGINE
-            </div>
-            <h1 className="font-display font-bold tracking-tight text-center mb-5 max-w-3xl leading-none"
-              style={{ fontSize: "clamp(2.2rem, 6vw, 5.5rem)" }}>
-              Instant business<br />
-              <em style={{ fontStyle: "italic", color: ACC }}>intelligence</em>
-            </h1>
-            <p className="font-mono text-sm text-muted-foreground text-center max-w-md mb-10 leading-relaxed">
-              Describe a company or idea — QWS-BIZ-4 generates a complete SWOT,
-              competitive landscape, financial projections, and strategic recommendations.
-            </p>
+        {/* ── LEFT: MAIN PANEL ── */}
+        <div style={{ flex:1,display:"flex",flexDirection:"column",overflow:"hidden",minWidth:0 }}>
 
-            <div className="w-full max-w-2xl mb-4" style={{ borderColor: `${ACC}40` }}>
-              <div className="border border-border focus-within:border-opacity-100 transition-colors"
-                style={{ "--tw-border-opacity": 1 } as React.CSSProperties}>
-                <textarea
-                  value={prompt}
-                  onChange={(e) => setPrompt(e.target.value)}
-                  placeholder="e.g. AI-powered logistics startup targeting last-mile delivery in Southeast Asia..."
-                  rows={3}
-                  className="w-full bg-background text-foreground font-mono text-sm p-5 resize-none outline-none border-0 placeholder:text-muted-foreground"
-                  style={{ caretColor: ACC }}
-                />
-                <div className="flex items-center justify-between px-5 py-3 border-t border-border gap-4">
-                  <input
-                    type="text"
-                    value={industry}
-                    onChange={(e) => setIndustry(e.target.value)}
-                    placeholder="Industry (e.g. Logistics, FinTech, HealthTech...)"
-                    className="flex-1 bg-background font-mono text-xs text-foreground outline-none border-0 placeholder:text-muted-foreground"
-                  />
-                  <button
-                    onClick={() => { if (prompt.trim()) setPage("config"); }}
-                    disabled={!prompt.trim()}
-                    className="shrink-0 flex items-center gap-2 font-mono text-xs px-5 py-2.5 font-bold transition-all disabled:opacity-20 disabled:cursor-not-allowed"
-                    style={{ background: ACC, color: "#000" }}
-                  >
-                    Configure <ArrowRight size={13} />
-                  </button>
+          {/* Scroll area */}
+          <div style={{ flex:1,overflowY:"auto",padding:page==="report"?"48px 64px 40px":"0",scrollbarWidth:"thin",scrollbarColor:"#252529 transparent" }}>
+
+            {/* ── HOME ── */}
+            {page === "home" && (
+              <div style={{ display:"flex",flexDirection:"column",alignItems:"flex-start",justifyContent:"center",minHeight:"calc(100vh - 160px)",padding:"52px 72px 40px" }}>
+                <div style={{ fontFamily:"'JetBrains Mono',monospace",fontSize:9,letterSpacing:".32em",textTransform:"uppercase",color:"#4a4a55",marginBottom:22,display:"flex",alignItems:"center",gap:10 }}>
+                  <div style={{ width:22,height:1,background:"#4a4a55" }} />
+                  {mode === "idea" ? "Venture AI Studio" : "Financial Intelligence Engine"}
                 </div>
+
+                <h1 className="serif" style={{ fontWeight:300,fontStyle:"italic",fontSize:"clamp(42px,6vw,68px)",lineHeight:1.1,letterSpacing:"-.01em",color:"#f7f5f0",marginBottom:24 }}>
+                  {mode === "idea"
+                    ? <>Generate your<br />next <span className="gold-text">billion-dollar</span><br />startup idea.</>
+                    : <>Unlock deep<br /><span className="gold-text">financial clarity</span><br />in seconds.</>}
+                </h1>
+
+                <p style={{ fontFamily:"'JetBrains Mono',monospace",fontSize:11,lineHeight:2,color:"#4a4a55",maxWidth:360,marginBottom:0 }}>
+                  {mode === "idea"
+                    ? "Select a sector, describe a problem space, and let AI engineer your venture — complete with competitive intelligence and financial modelling."
+                    : "Enter a company or business concept. Receive a comprehensive financial briefing with projections, risks, and strategic recommendations."}
+                </p>
               </div>
-            </div>
+            )}
 
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-px bg-border w-full max-w-2xl mt-6">
-              {[
-                { icon: "🧩", title: "SWOT Matrix",    desc: "4-quadrant strategic strengths & risk framework" },
-                { icon: "📊", title: "Market Sizing",  desc: "TAM / SAM / SOM with growth trajectory charts" },
-                { icon: "⚔️", title: "Competitors",    desc: "Landscape mapping with positioning analysis" },
-                { icon: "🎯", title: "Recommendations",desc: "Actionable strategic moves ranked by impact" },
-              ].map((f) => (
-                <div key={f.title} className="bg-background p-6">
-                  <div className="text-xl mb-3">{f.icon}</div>
-                  <div className="font-display text-xs font-bold mb-2">{f.title}</div>
-                  <p className="font-mono text-[10px] text-muted-foreground leading-relaxed">{f.desc}</p>
+            {/* ── GENERATING ── */}
+            {page === "generating" && (
+              <div style={{ display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",minHeight:"calc(100vh - 160px)",gap:24 }}>
+                <div style={{ width:48,height:48,borderRadius:"50%",border:"1px solid #252529",borderTopColor:`rgba(200,169,110,.65)`,animation:"spin 1s linear infinite" }} />
+                <div style={{ fontFamily:"'JetBrains Mono',monospace",fontSize:10,letterSpacing:".25em",textTransform:"uppercase",color:"#4a4a55" }}>
+                  {STEPS_GEN[stepIdx] || "Compiling report…"}
                 </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* ── CONFIG ── */}
-        {page === "config" && (
-          <div className="flex flex-col items-center justify-center min-h-[calc(100vh-4rem)] px-5 py-16">
-            <div className="w-full max-w-2xl">
-              <div className="font-display text-2xl font-bold mb-2">Choose analysis type</div>
-              <p className="font-mono text-xs text-muted-foreground mb-8">Select the intelligence framework to apply</p>
-
-              <div className="flex flex-col gap-2 mb-8">
-                {ANALYSIS_TYPES.map((at) => (
-                  <button
-                    key={at.value}
-                    onClick={() => setAnalysisType(at.value)}
-                    className="flex items-center gap-4 p-4 border text-left transition-all"
-                    style={{
-                      borderColor: analysisType === at.value ? ACC : "hsl(var(--border))",
-                      background: analysisType === at.value ? `${ACC}08` : "transparent",
-                    }}
-                  >
-                    <div className="text-2xl shrink-0">{at.icon}</div>
-                    <div className="flex-1">
-                      <div className="font-mono text-sm font-bold mb-0.5">{at.label}</div>
-                      <div className="font-mono text-[11px] text-muted-foreground">{at.desc}</div>
+                <div style={{ display:"flex",flexDirection:"column",gap:8,minWidth:320 }}>
+                  {STEPS_GEN.map((s, i) => (
+                    <div key={s} style={{ display:"flex",alignItems:"center",gap:12,padding:"10px 16px",border:`1px solid ${i===stepIdx?"rgba(200,169,110,.3)":i<stepIdx?"rgba(255,255,255,.05)":"rgba(255,255,255,.03)"}`,background:i===stepIdx?"rgba(200,169,110,.05)":"transparent",fontFamily:"'JetBrains Mono',monospace",fontSize:11,color:i===stepIdx?G:i<stepIdx?"#4a4a55":"#252529",transition:"all .3s" }}>
+                      <div style={{ width:5,height:5,borderRadius:"50%",background:i===stepIdx?G:i<stepIdx?"#4a4a55":"#252529",flexShrink:0 }} />
+                      {s}
                     </div>
-                    <div className="w-4 h-4 border shrink-0 flex items-center justify-center"
-                      style={{ borderColor: analysisType === at.value ? ACC : "hsl(var(--border))" }}>
-                      {analysisType === at.value && (
-                        <div className="w-2 h-2" style={{ background: ACC }} />
-                      )}
-                    </div>
-                  </button>
-                ))}
-              </div>
-
-              <button
-                onClick={generate}
-                className="w-full py-4 font-mono text-sm font-bold flex items-center justify-center gap-3 transition-all"
-                style={{ background: ACC, color: "#000" }}
-              >
-                Run Analysis <ArrowRight size={14} />
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* ── GENERATING ── */}
-        {page === "generating" && (
-          <div className="flex flex-col items-center justify-center min-h-[calc(100vh-4rem)] gap-8">
-            <div className="relative w-12 h-12">
-              <div className="absolute inset-0 border border-border rounded-full" />
-              <div className="absolute inset-0 rounded-full border-t-2" style={{ borderColor: ACC, animation: "spin 0.8s linear infinite" }} />
-            </div>
-            <div className="text-center">
-              <div className="font-display text-2xl font-bold mb-2">Running intelligence engine…</div>
-              <p className="font-mono text-xs text-muted-foreground">QWS-BIZ-4 is compiling your report</p>
-            </div>
-            <div className="flex flex-col gap-2 w-80">
-              {STEPS.map((s, i) => (
-                <div key={s} className="flex items-center gap-3 px-4 py-3 border font-mono text-xs transition-all"
-                  style={{
-                    borderColor: stepIdx === i ? `${ACC}60` : stepIdx > i ? "hsl(var(--border))" : "hsl(var(--border)/0.3)",
-                    background: stepIdx === i ? `${ACC}08` : "transparent",
-                    color: stepIdx === i ? ACC : stepIdx > i ? "hsl(var(--muted-foreground))" : "hsl(var(--muted-foreground)/0.3)",
-                  }}>
-                  <div className="w-1.5 h-1.5 rounded-full shrink-0" style={{ background: stepIdx === i ? ACC : stepIdx > i ? "hsl(var(--muted-foreground)/0.4)" : "hsl(var(--border))" }} />
-                  {s}
-                </div>
-              ))}
-            </div>
-            <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
-          </div>
-        )}
-
-        {/* ── REPORT ── */}
-        {page === "report" && report && (
-          <div className="max-w-5xl mx-auto px-5 py-12 space-y-10">
-            {/* Report header */}
-            <div className="flex items-start justify-between gap-4 border-b border-border pb-6">
-              <div>
-                <div className="font-mono text-[10px] tracking-[0.4em] uppercase mb-2" style={{ color: ACC }}>
-                  INTELLIGENCE REPORT · QWS-BIZ-4
-                </div>
-                <h2 className="font-display text-3xl font-bold tracking-tight">{report.company}</h2>
-                <div className="font-mono text-xs text-muted-foreground mt-1">
-                  {ANALYSIS_TYPES.find(a => a.value === report.type)?.label} · Generated {new Date().toLocaleDateString()}
+                  ))}
                 </div>
               </div>
-              <div className="flex gap-2 shrink-0">
-                <button onClick={copyReport}
-                  className="flex items-center gap-2 border border-border px-4 py-2.5 font-mono text-xs text-muted-foreground hover:text-foreground hover:border-foreground transition-colors">
-                  {copied ? <CheckCheck size={12} /> : <Copy size={12} />}
-                  {copied ? "Copied" : "Copy"}
-                </button>
-                <button
-                  onClick={() => window.print()}
-                  className="flex items-center gap-2 px-4 py-2.5 font-mono text-xs font-bold transition-all"
-                  style={{ background: ACC, color: "#000" }}>
-                  <Download size={12} /> Export
-                </button>
-              </div>
-            </div>
+            )}
 
-            {/* Executive summary */}
-            <div className="border-l-2 pl-5" style={{ borderColor: ACC }}>
-              <div className="font-mono text-[9px] tracking-[0.4em] uppercase mb-3" style={{ color: ACC }}>EXECUTIVE SUMMARY</div>
-              <p className="font-mono text-sm text-muted-foreground leading-relaxed">{report.executiveSummary}</p>
-            </div>
+            {/* ── REPORT ── */}
+            {page === "report" && report && (
+              <div style={{ display:"flex",flexDirection:"column",gap:28 }}>
 
-            {/* KPI cards */}
-            <div>
-              <div className="font-mono text-[9px] tracking-[0.4em] uppercase mb-4 text-muted-foreground">KEY METRICS</div>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-px bg-border">
-                {report.kpis.map((kpi) => (
-                  <div key={kpi.label} className="bg-background p-5">
-                    <div className="font-mono text-[9px] text-muted-foreground tracking-widest uppercase mb-2">{kpi.label}</div>
-                    <div className="font-display text-3xl font-bold mb-1">{kpi.value}</div>
-                    <div className="font-mono text-xs" style={{ color: kpi.up ? "#34d399" : "#f87171" }}>
-                      {kpi.change} YoY
-                    </div>
+                {/* Name & tagline */}
+                <Row delay={0}>
+                  <div style={{ display:"flex",alignItems:"center",gap:12,marginBottom:14 }}>
+                    <div style={{ fontFamily:"'JetBrains Mono',monospace",fontSize:9,letterSpacing:".32em",textTransform:"uppercase",color:GD }}>INTELLIGENCE REPORT</div>
+                    <div style={{ flex:1,height:1,background:`linear-gradient(90deg,${GD},transparent)` }} />
                   </div>
-                ))}
-              </div>
-            </div>
+                  <h2 className="serif" style={{ fontWeight:600,fontSize:"clamp(52px,7vw,88px)",lineHeight:.9,letterSpacing:"-.02em",color:"#f7f5f0",marginBottom:14 }}>{report.name}</h2>
+                  <div className="serif" style={{ fontStyle:"italic",fontWeight:300,fontSize:20,color:"#8888a0",lineHeight:1.5,marginBottom:0 }}>{report.tagline}</div>
+                </Row>
 
-            {/* Chart + Competitors side by side */}
-            <div className="grid md:grid-cols-2 gap-6">
-              {/* Growth chart */}
-              <div className="border border-border p-5">
-                <div className="font-mono text-[9px] tracking-[0.4em] uppercase mb-5 text-muted-foreground">MARKET GROWTH TRAJECTORY</div>
-                <div className="flex items-end gap-2 h-40">
-                  {report.chartData.map((bar) => (
-                    <div key={bar.label} className="flex-1 flex flex-col items-center gap-2">
-                      <div
-                        className="w-full rounded-sm transition-all"
-                        style={{ height: `${bar.value}%`, background: `linear-gradient(0deg, ${ACC}, ${ACC}80)` }}
-                      />
-                      <div className="font-mono text-[8px] text-muted-foreground">{bar.label}</div>
-                    </div>
-                  ))}
-                </div>
-              </div>
+                {/* Exec summary */}
+                <Row delay={0.06}>
+                  <div className="biz-card">
+                    <div style={{ fontFamily:"'JetBrains Mono',monospace",fontSize:9,letterSpacing:".3em",textTransform:"uppercase",color:"#4a4a55",marginBottom:12 }}>EXECUTIVE SUMMARY</div>
+                    <p style={{ fontFamily:"'JetBrains Mono',monospace",fontSize:12,lineHeight:2,color:"#d0cec8" }}>{report.execSummary}</p>
+                  </div>
+                </Row>
 
-              {/* Competitors */}
-              <div className="border border-border p-5">
-                <div className="font-mono text-[9px] tracking-[0.4em] uppercase mb-5 text-muted-foreground">COMPETITIVE STRENGTH MAP</div>
-                <div className="flex flex-col gap-3">
-                  {report.competitors.map((c) => (
-                    <div key={c.name}>
-                      <div className="flex items-center justify-between mb-1">
-                        <span className="font-mono text-xs font-bold">{c.name}</span>
-                        <span className="font-mono text-[10px] text-muted-foreground">{c.strength}%</span>
+                {/* Metrics */}
+                <Row delay={0.10}>
+                  <div style={{ display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:1,background:"#252529",border:"1px solid #252529" }}>
+                    {report.metrics.map(m => (
+                      <div key={m.label} className="biz-card" style={{ borderRadius:0,border:"none" }}>
+                        <div className="serif" style={{ fontWeight:600,fontSize:42,letterSpacing:"-.01em",display:"block",marginBottom:6,color:"#f7f5f0" }}>{m.value}</div>
+                        <div style={{ fontFamily:"'JetBrains Mono',monospace",fontSize:9,letterSpacing:".2em",textTransform:"uppercase",color:"#4a4a55",marginBottom:5 }}>{m.label}</div>
+                        <div style={{ fontFamily:"'JetBrains Mono',monospace",fontSize:10,color:G }}>{m.sub}</div>
                       </div>
-                      <div className="h-1.5 bg-border/50">
-                        <div
-                          className="h-full transition-all"
-                          style={{ width: `${c.strength}%`, background: c.name === report.company ? ACC : "hsl(var(--muted-foreground)/0.4)" }}
-                        />
-                      </div>
-                      <div className="font-mono text-[9px] text-muted-foreground mt-0.5">{c.focus}</div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
+                    ))}
+                  </div>
+                </Row>
 
-            {/* SWOT */}
-            <div>
-              <div className="font-mono text-[9px] tracking-[0.4em] uppercase mb-4 text-muted-foreground">SWOT FRAMEWORK</div>
-              <div className="grid grid-cols-2 gap-px bg-border">
-                {([
-                  { key: "strengths",    label: "Strengths",    color: "#34d399" },
-                  { key: "weaknesses",   label: "Weaknesses",   color: "#f87171" },
-                  { key: "opportunities",label: "Opportunities", color: ACC },
-                  { key: "threats",      label: "Threats",      color: "#fbbf24" },
-                ] as const).map((q) => (
-                  <div key={q.key} className="bg-background p-5">
-                    <div className="font-mono text-[9px] tracking-widest uppercase mb-4 font-bold" style={{ color: q.color }}>
-                      {q.label}
+                {/* Financial cards */}
+                <Row delay={0.14}>
+                  <div style={{ fontFamily:"'JetBrains Mono',monospace",fontSize:9,letterSpacing:".3em",textTransform:"uppercase",color:"#4a4a55",marginBottom:14 }}>FINANCIAL PROJECTIONS</div>
+                  <div style={{ display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:10 }}>
+                    {report.fins.map(f => (
+                      <div key={f.label} className="biz-card" style={{ transition:"border-color .2s" }}
+                        onMouseEnter={e => (e.currentTarget.style.borderColor="rgba(200,169,110,.22)")}
+                        onMouseLeave={e => (e.currentTarget.style.borderColor="#252529")}>
+                        <div style={{ fontFamily:"'JetBrains Mono',monospace",fontSize:8,letterSpacing:".28em",textTransform:"uppercase",color:"#4a4a55",marginBottom:9 }}>{f.label}</div>
+                        <div className="serif" style={{ fontSize:22,color:"#f7f5f0",lineHeight:1.25 }}>{f.value}</div>
+                        <div style={{ fontFamily:"'JetBrains Mono',monospace",fontSize:10,color:"#4a4a55",marginTop:6,lineHeight:1.7 }}>{f.sub}</div>
+                      </div>
+                    ))}
+                  </div>
+                </Row>
+
+                {/* Growth chart */}
+                <Row delay={0.18}>
+                  <div className="biz-card">
+                    <div style={{ display:"flex",alignItems:"flex-start",justifyContent:"space-between",marginBottom:22 }}>
+                      <div>
+                        <div style={{ fontFamily:"'JetBrains Mono',monospace",fontSize:9,letterSpacing:".3em",textTransform:"uppercase",color:"#4a4a55",marginBottom:5 }}>MARKET GROWTH</div>
+                        <div className="serif" style={{ fontStyle:"italic",fontSize:20,color:"#f7f5f0" }}>Revenue trajectory projection</div>
+                      </div>
+                      <div style={{ display:"flex",gap:12,alignItems:"center" }}>
+                        <div style={{ display:"flex",alignItems:"center",gap:6,fontFamily:"'JetBrains Mono',monospace",fontSize:9,letterSpacing:".08em",color:"#4a4a55",textTransform:"uppercase" }}>
+                          <div style={{ width:9,height:9,background:G }} /> Revenue
+                        </div>
+                      </div>
                     </div>
-                    <div className="flex flex-col gap-3">
-                      {report.swot[q.key].map((item, i) => (
-                        <div key={i} className="flex items-start gap-2">
-                          <div className="w-1 h-1 rounded-full shrink-0 mt-1.5" style={{ background: q.color }} />
-                          <p className="font-mono text-[11px] text-muted-foreground leading-relaxed">{item.text}</p>
+                    <div style={{ display:"flex",alignItems:"flex-end",gap:8,height:120 }}>
+                      {report.chartBars.map((b, i) => (
+                        <div key={b.label} style={{ flex:1,display:"flex",flexDirection:"column",alignItems:"center",gap:6,height:"100%" }}>
+                          <div style={{ flex:1,display:"flex",alignItems:"flex-end",width:"100%" }}>
+                            <div style={{ width:"100%",background:`linear-gradient(0deg,${G},rgba(200,169,110,.4))`,borderRadius:"2px 2px 0 0",animation:"barGrow .8s cubic-bezier(.22,1,.36,1) both",animationDelay:`${0.08*i}s`,height:`${b.value}%` }} />
+                          </div>
+                          <div style={{ fontFamily:"'JetBrains Mono',monospace",fontSize:8,color:"#4a4a55" }}>{b.label}</div>
                         </div>
                       ))}
                     </div>
+                    <div style={{ fontFamily:"'JetBrains Mono',monospace",fontSize:9,letterSpacing:".1em",color:"#252529",marginTop:13 }}>Source: QWS-BIZ-4 financial model v2.1 · Projections are estimates</div>
                   </div>
-                ))}
-              </div>
-            </div>
+                </Row>
 
-            {/* Recommendations + Risks */}
-            <div className="grid md:grid-cols-2 gap-6">
-              <div className="border border-border p-5">
-                <div className="font-mono text-[9px] tracking-[0.4em] uppercase mb-4" style={{ color: ACC }}>
-                  STRATEGIC RECOMMENDATIONS
-                </div>
-                <div className="flex flex-col gap-3">
-                  {report.recommendations.map((r, i) => (
-                    <div key={i} className="flex items-start gap-3">
-                      <div className="font-mono text-[10px] font-bold shrink-0 mt-0.5" style={{ color: ACC }}>
-                        {String(i + 1).padStart(2, "0")}
+                {/* SWOT */}
+                <Row delay={0.22}>
+                  <div style={{ fontFamily:"'JetBrains Mono',monospace",fontSize:9,letterSpacing:".3em",textTransform:"uppercase",color:"#4a4a55",marginBottom:14 }}>SWOT FRAMEWORK</div>
+                  <div style={{ display:"grid",gridTemplateColumns:"1fr 1fr",gap:10 }}>
+                    {([
+                      { key:"s" as const, label:"Strengths",    color:"rgba(52,201,122,.9)" },
+                      { key:"w" as const, label:"Weaknesses",   color:"rgba(224,64,64,.9)" },
+                      { key:"o" as const, label:"Opportunities",color:G },
+                      { key:"t" as const, label:"Threats",      color:"rgba(251,191,36,.9)" },
+                    ]).map(({ key, label, color }) => (
+                      <div key={key} className="biz-card">
+                        <div style={{ fontFamily:"'JetBrains Mono',monospace",fontSize:9,letterSpacing:".3em",textTransform:"uppercase",marginBottom:14,color }}>{label}</div>
+                        {report.swot[key].map((item, i) => (
+                          <div key={i} style={{ display:"flex",gap:12,padding:"9px 0",borderBottom:"1px solid rgba(255,255,255,.04)",fontFamily:"'JetBrains Mono',monospace",fontSize:11,lineHeight:1.7,color:"#d0cec8" }}>
+                            <div style={{ color,fontSize:10,paddingTop:3,flexShrink:0,opacity:.7 }}>◆</div>
+                            {item}
+                          </div>
+                        ))}
                       </div>
-                      <p className="font-mono text-[11px] text-muted-foreground leading-relaxed">{r}</p>
-                    </div>
-                  ))}
-                </div>
-              </div>
+                    ))}
+                  </div>
+                </Row>
 
-              <div className="border border-border p-5">
-                <div className="font-mono text-[9px] tracking-[0.4em] uppercase mb-4 text-[#f87171]">
-                  KEY RISKS
-                </div>
-                <div className="flex flex-col gap-3">
-                  {report.risks.map((r, i) => (
-                    <div key={i} className="flex items-start gap-3">
-                      <div className="font-mono text-[10px] font-bold shrink-0 mt-0.5 text-[#f87171]">⚠</div>
-                      <p className="font-mono text-[11px] text-muted-foreground leading-relaxed">{r}</p>
+                {/* Competitors */}
+                <Row delay={0.26}>
+                  <div style={{ display:"flex",alignItems:"baseline",gap:12,marginBottom:20 }}>
+                    <div className="serif" style={{ fontStyle:"italic",fontSize:22,color:"#f7f5f0" }}>Competitive Landscape</div>
+                    <div style={{ fontFamily:"'JetBrains Mono',monospace",fontSize:9,letterSpacing:".25em",textTransform:"uppercase",color:"#4a4a55" }}>{report.rivals.length} key rivals</div>
+                  </div>
+                  {report.rivals.map((r, i) => (
+                    <div key={r.name} style={{ border:"1px solid #252529",background:"#141418",marginBottom:12,overflow:"hidden",transition:"border-color .2s" }}
+                      onMouseEnter={e => (e.currentTarget.style.borderColor="rgba(255,255,255,.12)")}
+                      onMouseLeave={e => (e.currentTarget.style.borderColor="#252529")}>
+                      {/* Threat bar */}
+                      <div style={{ height:2,width:"100%",background:"#252529",position:"relative",overflow:"hidden" }}>
+                        <div className="threat-fill" style={{ "--threat-w":`${r.threat}%`,"--row-delay":`${0.1+i*0.15}s`,background:threatColor(r.threat) } as React.CSSProperties} />
+                      </div>
+                      <div style={{ padding:"18px 20px 16px" }}>
+                        <div style={{ display:"flex",alignItems:"flex-start",justifyContent:"space-between",gap:12,marginBottom:14 }}>
+                          <div>
+                            <div style={{ fontFamily:"'JetBrains Mono',monospace",fontWeight:700,fontSize:17,letterSpacing:".04em",color:"#f7f5f0",marginBottom:5 }}>{r.name}</div>
+                            <div style={{ display:"flex",alignItems:"center",gap:8 }}>
+                              <span style={{ fontFamily:"'JetBrains Mono',monospace",fontSize:9,letterSpacing:".15em",textTransform:"uppercase",color:"#4a4a55" }}>Founded {r.founded}</span>
+                              <span style={{ fontFamily:"'JetBrains Mono',monospace",fontSize:8,letterSpacing:".15em",textTransform:"uppercase",border:"1px solid rgba(255,255,255,.1)",padding:"2px 8px",color:"#8888a0" }}>{r.stage}</span>
+                            </div>
+                          </div>
+                          <div style={{ display:"flex",flexDirection:"column",alignItems:"flex-end",flexShrink:0 }}>
+                            <div className="serif" style={{ fontWeight:600,fontSize:32,lineHeight:1,letterSpacing:"-.01em",color:threatColor(r.threat) }}>{r.threat}</div>
+                            <div style={{ fontFamily:"'JetBrains Mono',monospace",fontSize:8,letterSpacing:".2em",textTransform:"uppercase",color:"#4a4a55",marginTop:2 }}>Threat Score</div>
+                          </div>
+                        </div>
+                        <div style={{ display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:1,background:"#252529",marginBottom:14 }}>
+                          {[["Funding",r.funding],["Growth",r.growth],["Team",r.employees],["Revenue",r.revenue]].map(([l,v]) => (
+                            <div key={l} style={{ background:"#141418",padding:"10px 12px" }}>
+                              <div style={{ fontFamily:"'JetBrains Mono',monospace",fontSize:8,letterSpacing:".2em",textTransform:"uppercase",color:"#4a4a55",marginBottom:5 }}>{l}</div>
+                              <div style={{ fontFamily:"'JetBrains Mono',monospace",fontSize:13,color: l==="Growth" ? `rgba(200,169,110,.9)` : "#f7f5f0" }}>{v}</div>
+                            </div>
+                          ))}
+                        </div>
+                        <div style={{ display:"grid",gridTemplateColumns:"1fr 1fr",gap:10 }}>
+                          <div style={{ padding:"10px 12px",background:"rgba(255,255,255,.03)",border:"1px solid rgba(255,255,255,.06)" }}>
+                            <div style={{ fontFamily:"'JetBrains Mono',monospace",fontSize:8,letterSpacing:".2em",textTransform:"uppercase",color:"rgba(255,255,255,.35)",marginBottom:5 }}>Strength</div>
+                            <div style={{ fontFamily:"'JetBrains Mono',monospace",fontSize:11,lineHeight:1.6,color:"#d0cec8" }}>{r.strength}</div>
+                          </div>
+                          <div style={{ padding:"10px 12px",background:"rgba(200,169,110,.03)",border:"1px solid rgba(200,169,110,.08)" }}>
+                            <div style={{ fontFamily:"'JetBrains Mono',monospace",fontSize:8,letterSpacing:".2em",textTransform:"uppercase",color:"rgba(200,169,110,.4)",marginBottom:5 }}>Weakness</div>
+                            <div style={{ fontFamily:"'JetBrains Mono',monospace",fontSize:11,lineHeight:1.6,color:"#d0cec8" }}>{r.weakness}</div>
+                          </div>
+                        </div>
+                      </div>
                     </div>
                   ))}
-                </div>
+                </Row>
+
+                {/* Risk */}
+                <Row delay={0.30}>
+                  <div className="biz-card">
+                    <div style={{ display:"grid",gridTemplateColumns:"auto 1fr",gap:32,alignItems:"center" }}>
+                      <div style={{ display:"flex",flexDirection:"column",alignItems:"center" }}>
+                        <div className="serif" style={{ fontWeight:600,fontSize:64,lineHeight:1,letterSpacing:"-.02em",color:G }}>{Math.round(report.risks.reduce((a,r)=>a+r.score,0)/report.risks.length)}</div>
+                        <div style={{ fontFamily:"'JetBrains Mono',monospace",fontSize:9,letterSpacing:".25em",textTransform:"uppercase",color:"#4a4a55",marginTop:6 }}>Risk Score</div>
+                        <div className="serif" style={{ fontStyle:"italic",fontSize:15,marginTop:10,textAlign:"center",color:"#8888a0" }}>Moderate</div>
+                      </div>
+                      <div>
+                        <div style={{ fontFamily:"'JetBrains Mono',monospace",fontSize:9,letterSpacing:".3em",textTransform:"uppercase",color:"#4a4a55",marginBottom:16 }}>RISK BREAKDOWN</div>
+                        <div style={{ display:"flex",flexDirection:"column",gap:11 }}>
+                          {report.risks.map((rb, i) => (
+                            <div key={rb.name}>
+                              <div style={{ display:"flex",justifyContent:"space-between",alignItems:"baseline",marginBottom:5 }}>
+                                <span style={{ fontFamily:"'JetBrains Mono',monospace",fontSize:10,letterSpacing:".08em",color:"#d0cec8" }}>{rb.name}</span>
+                                <span style={{ fontFamily:"'JetBrains Mono',monospace",fontSize:10,color:"#4a4a55" }}>{rb.score}</span>
+                              </div>
+                              <div style={{ height:3,background:"#252529",position:"relative",overflow:"hidden" }}>
+                                <div className="rb-fill" style={{ "--bar-w":`${rb.score}%`,"--row-delay":`${0.32+i*0.08}s`,background:`linear-gradient(90deg,${GD},${G})` } as React.CSSProperties} />
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </Row>
+
+                {/* Recommendations */}
+                <Row delay={0.34}>
+                  <div className="biz-card">
+                    <div style={{ fontFamily:"'JetBrains Mono',monospace",fontSize:9,letterSpacing:".3em",textTransform:"uppercase",color:GD,marginBottom:16 }}>STRATEGIC RECOMMENDATIONS</div>
+                    {report.recs.map((r, i) => (
+                      <div key={i} style={{ display:"flex",gap:16,padding:"12px 0",borderBottom:i<report.recs.length-1?"1px solid rgba(255,255,255,.04)":"none" }}>
+                        <div className="serif" style={{ fontWeight:600,fontSize:24,lineHeight:1,color:G,flexShrink:0,paddingTop:2 }}>{String(i+1).padStart(2,"0")}</div>
+                        <div style={{ fontFamily:"'JetBrains Mono',monospace",fontSize:12,lineHeight:1.9,color:"#d0cec8" }}>{r}</div>
+                      </div>
+                    ))}
+                  </div>
+                </Row>
+
+                {/* Advisor trigger */}
+                <Row delay={0.38}>
+                  <div style={{ paddingBottom:60 }}>
+                    <button onClick={() => setAdvisorOpen(true)} style={{ display:"inline-flex",alignItems:"center",gap:10,background:"#141418",color:G,border:`1px solid rgba(200,169,110,.35)`,fontFamily:"'JetBrains Mono',monospace",fontSize:10,letterSpacing:".18em",textTransform:"uppercase",padding:"13px 24px",cursor:"pointer",transition:"all .25s" }}
+                      onMouseEnter={e => { e.currentTarget.style.background="rgba(200,169,110,.07)"; e.currentTarget.style.borderColor=G; }}
+                      onMouseLeave={e => { e.currentTarget.style.background="#141418"; e.currentTarget.style.borderColor="rgba(200,169,110,.35)"; }}>
+                      <div style={{ width:6,height:6,borderRadius:"50%",background:G,opacity:.7,animation:"pulse 2s infinite" }} />
+                      Open AI Advisor
+                    </button>
+                  </div>
+                </Row>
+
+              </div>
+            )}
+          </div>
+
+          {/* ── SECTOR PILLS ── */}
+          {page !== "generating" && (
+            <div style={{ display:"flex",flexWrap:"wrap",gap:6,padding:"10px 28px 0",borderTop:"1px solid rgba(255,255,255,.04)",flexShrink:0 }}>
+              {SECTORS.map(s => (
+                <button key={s} className={`spill${sector===(s==="All"?"":s)?" active":""}`} onClick={() => setSector(s==="All"?"":s)}>
+                  {s}
+                </button>
+              ))}
+            </div>
+          )}
+
+          {/* ── INPUT BAR ── */}
+          {page !== "generating" && (
+            <div style={{ flexShrink:0,borderTop:"1px solid rgba(255,255,255,.07)",padding:"16px 28px 20px",background:"#0c0c0e",position:"relative",zIndex:10 }}>
+              <div style={{ display:"flex",alignItems:"stretch",border:"1px solid rgba(255,255,255,.1)",background:"#141418",overflow:"hidden",transition:"border-color .2s" }}
+                onFocus={e => (e.currentTarget.style.borderColor="rgba(255,255,255,.22)")}
+                onBlur={e => (e.currentTarget.style.borderColor="rgba(255,255,255,.1)")}>
+                <input
+                  ref={inputRef}
+                  type="text"
+                  value={prompt}
+                  onChange={e => setPrompt(e.target.value)}
+                  onKeyDown={e => { if (e.key==="Enter") generate(); }}
+                  placeholder={mode==="idea" ? "Describe a problem or market gap to explore…" : "Enter a company, sector, or financial scenario to analyse…"}
+                  style={{ flex:1,background:"transparent",border:"none",color:"#f7f5f0",fontFamily:"'JetBrains Mono',monospace",fontSize:12,padding:"16px 20px",outline:"none" }}
+                />
+                <button onClick={generate} disabled={!prompt.trim()} style={{ background: prompt.trim() ? G : "#252529", color: prompt.trim() ? "#0c0c0e" : "#4a4a55", border:"none", fontFamily:"'JetBrains Mono',monospace", fontWeight:700, fontSize:11, letterSpacing:".14em", textTransform:"uppercase", padding:"0 32px", cursor: prompt.trim() ? "pointer" : "not-allowed", transition:"background .15s", flexShrink:0 }}>
+                  {page === "report" ? "Regenerate" : "Analyse"}
+                </button>
+              </div>
+              <div style={{ display:"flex",justifyContent:"space-between",marginTop:9 }}>
+                <span style={{ fontFamily:"'JetBrains Mono',monospace",fontSize:9,letterSpacing:".14em",color:"#252529" }}>Enter ↵ to generate · Select a sector above to filter</span>
+                <span style={{ fontFamily:"'JetBrains Mono',monospace",fontSize:9,letterSpacing:".14em",textTransform:"uppercase",color:"#252529" }}>Model: <span style={{ color:"#4a4a55" }}>QWS-BIZ-4</span></span>
               </div>
             </div>
+          )}
+        </div>
 
-            <div className="border-t border-border pt-6 flex items-center justify-between">
-              <span className="font-mono text-[10px] text-muted-foreground">Generated by QWS-BIZ-4 · QuickWebStack Intelligence Engine</span>
-              <button onClick={() => { setPage("home"); setReport(null); }}
-                className="font-mono text-[10px] text-muted-foreground hover:text-foreground transition-colors">
-                New Analysis →
-              </button>
+        {/* ── ADVISOR PANEL ── */}
+        <div className={`advisor-panel${advisorOpen?" open":""}`}>
+          <div style={{ padding:"22px 26px 18px",borderBottom:"1px solid rgba(255,255,255,.05)",display:"flex",alignItems:"flex-start",justifyContent:"space-between",flexShrink:0 }}>
+            <div>
+              <div className="serif" style={{ fontWeight:300,fontStyle:"italic",fontSize:22,color:"#f7f5f0" }}>AI Advisor</div>
+              <div style={{ fontFamily:"'JetBrains Mono',monospace",fontSize:9,letterSpacing:".2em",textTransform:"uppercase",color:"#4a4a55",marginTop:3,display:"flex",alignItems:"center",gap:7 }}>
+                <div style={{ width:16,height:1,background:"#4a4a55" }} />
+                Venture Intelligence
+              </div>
+            </div>
+            <button onClick={() => setAdvisorOpen(false)} style={{ background:"none",border:"1px solid rgba(255,255,255,.07)",color:"#8888a0",width:30,height:30,display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",fontSize:12,transition:"all .15s" }}>×</button>
+          </div>
+
+          <div style={{ flex:1,overflowY:"auto",padding:"20px 26px",display:"flex",flexDirection:"column",gap:14,scrollbarWidth:"thin",scrollbarColor:"#252529 transparent" }}>
+            {messages.length === 0 && (
+              <div style={{ height:"100%",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:12,textAlign:"center" }}>
+                <div style={{ width:56,height:56,borderRadius:"50%",border:"1px solid #252529",display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,color:"#4a4a55" }}>◑</div>
+                <div className="serif" style={{ fontStyle:"italic",fontSize:17,color:"#4a4a55" }}>Ask me anything about this venture</div>
+                <div style={{ fontFamily:"'JetBrains Mono',monospace",fontSize:10,lineHeight:1.9,color:"#252529" }}>Risk factors · Funding strategy<br />Market entry · Team building</div>
+              </div>
+            )}
+            {messages.map((m, i) => (
+              <div key={i} className="chat-msg">
+                <div style={{ display:"flex",alignItems:"center",gap:7,marginBottom:7 }}>
+                  <div style={{ width:5,height:5,borderRadius:"50%",background:m.role==="ai"?G:"#8888a0" }} />
+                  <span style={{ fontFamily:"'JetBrains Mono',monospace",fontSize:8,letterSpacing:".25em",textTransform:"uppercase",color:"#4a4a55" }}>{m.role==="ai"?"Advisor":"You"}</span>
+                </div>
+                <div style={{ fontFamily:"'JetBrains Mono',monospace",fontSize:11.5,lineHeight:1.85,padding:"13px 15px",border:`1px solid ${m.role==="ai"?"rgba(255,255,255,.06)":"rgba(255,255,255,.07)"}`,background:m.role==="ai"?"rgba(12,12,14,.5)":"rgba(255,255,255,.04)",color:m.role==="ai"?"#d0cec8":"#f7f5f0",marginLeft:m.role==="user"?22:0,marginRight:m.role==="ai"?22:0,position:"relative" }}>
+                  {m.role==="ai" && <div style={{ position:"absolute",left:0,top:0,bottom:0,width:2,background:`linear-gradient(180deg,rgba(200,169,110,.55),transparent)` }} />}
+                  {m.text}
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div style={{ padding:"14px 26px 18px",borderTop:"1px solid rgba(255,255,255,.05)",flexShrink:0 }}>
+            <div style={{ display:"flex",border:"1px solid rgba(255,255,255,.08)",background:"rgba(12,12,14,.6)",overflow:"hidden",transition:"border-color .2s" }}>
+              <textarea
+                value={chatInput}
+                onChange={e => setChatInput(e.target.value)}
+                onKeyDown={e => { if (e.key==="Enter"&&!e.shiftKey){e.preventDefault();sendChat();} }}
+                placeholder="Ask the advisor…"
+                rows={1}
+                style={{ flex:1,background:"transparent",border:"none",color:"#f7f5f0",fontFamily:"'JetBrains Mono',monospace",fontSize:11.5,padding:"12px 15px",outline:"none",resize:"none",height:44,lineHeight:1.4 }}
+              />
+              <button onClick={sendChat} disabled={!chatInput.trim()} style={{ background:"transparent",border:"none",borderLeft:"1px solid rgba(255,255,255,.07)",color:G,fontSize:17,padding:"0 16px",cursor:"pointer",transition:"all .15s",display:"flex",alignItems:"center" }}>→</button>
             </div>
           </div>
-        )}
+        </div>
+
       </div>
     </div>
   );
-}
-
-function delay(ms: number) {
-  return new Promise((r) => setTimeout(r, ms));
 }

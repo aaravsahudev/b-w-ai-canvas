@@ -31,18 +31,6 @@ const Generate = () => {
   const [modelOpen, setModelOpen] = useState(false);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
-  useEffect(() => {
-    const handleOutsideClick = (event: MouseEvent) => {
-      const target = event.target as HTMLElement;
-      if (!target.closest("[data-model-dropdown]")) {
-        setModelOpen(false);
-      }
-    };
-
-    document.addEventListener("mousedown", handleOutsideClick);
-    return () => document.removeEventListener("mousedown", handleOutsideClick);
-  }, []);
-
   const handleBuild = () => {
     if (!prompt.trim() || isBuilding) return;
     setIsBuilding(true);
@@ -104,12 +92,13 @@ const Generate = () => {
 
         {/* Model selector */}
         <div
-          className="w-full max-w-2xl mb-3 animate-slide-up relative"
+          className="w-full max-w-2xl mb-3 animate-slide-up relative z-30"
           style={{ animationDelay: "0.12s" }}
           data-model-dropdown
         >
           <button
             onClick={() => setModelOpen((v) => !v)}
+            onBlur={() => setTimeout(() => setModelOpen(false), 120)}
             className="flex items-center justify-between w-full border border-border px-4 py-3 font-mono text-xs text-foreground hover:border-foreground transition-colors bg-background"
             data-testid="model-selector"
           >
@@ -124,10 +113,11 @@ const Generate = () => {
           </button>
 
           {modelOpen && (
-            <div className="absolute top-full left-0 right-0 z-30 border border-border border-t-0 bg-background">
+            <div className="absolute top-full left-0 right-0 z-50 border border-border border-t-0 bg-background shadow-lg">
               {MODELS.map((m) => (
                 <button
                   key={m.id}
+                  onMouseDown={(e) => e.preventDefault()}
                   onClick={() => { setSelectedModel(m); setModelOpen(false); }}
                   className={`flex items-center gap-3 w-full px-4 py-3 font-mono text-xs text-left hover:bg-foreground hover:text-background transition-colors border-b border-border last:border-b-0 ${
                     selectedModel.id === m.id ? "bg-foreground text-background" : "text-foreground"

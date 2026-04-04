@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowRight, Sparkles, ChevronDown } from "lucide-react";
 import { generateWebsite } from "@/utils/codeGenerator";
@@ -30,6 +30,18 @@ const Generate = () => {
   const [selectedModel, setSelectedModel] = useState(MODELS[0]);
   const [modelOpen, setModelOpen] = useState(false);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+
+  useEffect(() => {
+    const handleOutsideClick = (event: MouseEvent) => {
+      const target = event.target as HTMLElement;
+      if (!target.closest("[data-model-dropdown]")) {
+        setModelOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleOutsideClick);
+    return () => document.removeEventListener("mousedown", handleOutsideClick);
+  }, []);
 
   const handleBuild = () => {
     if (!prompt.trim() || isBuilding) return;
@@ -94,6 +106,7 @@ const Generate = () => {
         <div
           className="w-full max-w-2xl mb-3 animate-slide-up relative"
           style={{ animationDelay: "0.12s" }}
+          data-model-dropdown
         >
           <button
             onClick={() => setModelOpen((v) => !v)}
@@ -138,9 +151,8 @@ const Generate = () => {
 
         {/* Main input box */}
         <div
-          className="w-full max-w-2xl border border-border focus-within:border-foreground transition-colors animate-slide-up"
+          className="w-full max-w-2xl border border-border focus-within:border-foreground transition-colors animate-slide-up relative z-10"
           style={{ animationDelay: "0.15s" }}
-          onClick={() => modelOpen && setModelOpen(false)}
         >
           <textarea
             ref={inputRef}

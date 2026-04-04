@@ -1,6 +1,13 @@
 const AnimatedLogo = ({ size = 32 }: { size?: number }) => {
   return (
-    <div style={{ display: "flex", alignItems: "center", gap: size * 0.28, flexShrink: 0 }}>
+    <div
+      style={{
+        display: "flex",
+        alignItems: "center",
+        gap: size * 0.28,
+        flexShrink: 0,
+      }}
+    >
       <style>{`
         @keyframes navSpinRing {
           from { transform: rotate(0deg); }
@@ -36,11 +43,19 @@ const AnimatedLogo = ({ size = 32 }: { size?: number }) => {
         viewBox="0 0 80 80"
         fill="none"
         xmlns="http://www.w3.org/2000/svg"
-        style={{ width: size, height: size, overflow: "visible", flexShrink: 0, background: "transparent" }}
+        style={{
+          width: size,
+          height: size,
+          overflow: "visible",
+          flexShrink: 0,
+          background: "transparent",
+        }}
       >
         <circle
           className="nav-q-ring-outer"
-          cx="40" cy="40" r="37"
+          cx="40"
+          cy="40"
+          r="37"
           stroke="currentColor"
           strokeOpacity="0.12"
           strokeWidth="1"
@@ -49,7 +64,9 @@ const AnimatedLogo = ({ size = 32 }: { size?: number }) => {
         />
         <circle
           className="nav-q-ring-inner"
-          cx="40" cy="40" r="31"
+          cx="40"
+          cy="40"
+          r="31"
           stroke="currentColor"
           strokeOpacity="0.07"
           strokeWidth="0.5"
@@ -58,7 +75,9 @@ const AnimatedLogo = ({ size = 32 }: { size?: number }) => {
         />
         <circle
           className="nav-q-circle"
-          cx="40" cy="40" r="24"
+          cx="40"
+          cy="40"
+          r="24"
           stroke="currentColor"
           strokeWidth="6"
           fill="none"
@@ -66,12 +85,22 @@ const AnimatedLogo = ({ size = 32 }: { size?: number }) => {
         />
         <line
           className="nav-q-tail"
-          x1="57" y1="57" x2="68" y2="68"
+          x1="57"
+          y1="57"
+          x2="68"
+          y2="68"
           stroke="currentColor"
           strokeWidth="6"
           strokeLinecap="round"
         />
-        <circle className="nav-q-dot" cx="40" cy="40" r="2.5" fill="currentColor" fillOpacity="0.2" />
+        <circle
+          className="nav-q-dot"
+          cx="40"
+          cy="40"
+          r="2.5"
+          fill="currentColor"
+          fillOpacity="0.2"
+        />
       </svg>
 
       <span

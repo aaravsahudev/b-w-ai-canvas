@@ -256,23 +256,83 @@ export default function BusinessAnalysis() {
 
             {/* ── HOME ── */}
             {page === "home" && (
-              <div style={{ display:"flex",flexDirection:"column",alignItems:"flex-start",justifyContent:"center",minHeight:"calc(100vh - 160px)",padding:"52px 72px 40px" }}>
-                <div style={{ fontFamily:"'JetBrains Mono',monospace",fontSize:9,letterSpacing:".32em",textTransform:"uppercase",color:"#4a4a55",marginBottom:22,display:"flex",alignItems:"center",gap:10 }}>
-                  <div style={{ width:22,height:1,background:"#4a4a55" }} />
-                  {mode === "idea" ? "Venture AI Studio" : "Financial Intelligence Engine"}
+              <div style={{ display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",minHeight:"calc(100vh - 90px)",padding:"52px 24px 48px",textAlign:"center" }}>
+
+                {/* Eyebrow */}
+                <div style={{ fontFamily:"'JetBrains Mono',monospace",fontSize:9,letterSpacing:".45em",textTransform:"uppercase",color:"#4a4a55",marginBottom:26,display:"flex",alignItems:"center",gap:16 }}>
+                  <div style={{ width:28,height:1,background:"#252529" }} />
+                  {mode === "idea" ? "Venture Intelligence Studio" : "Financial Analysis Engine"}
+                  <div style={{ width:28,height:1,background:"#252529" }} />
                 </div>
 
-                <h1 className="serif" style={{ fontWeight:300,fontStyle:"italic",fontSize:"clamp(42px,6vw,68px)",lineHeight:1.1,letterSpacing:"-.01em",color:"#f7f5f0",marginBottom:24 }}>
+                {/* Headline */}
+                <h1 className="serif" style={{ fontWeight:300,fontStyle:"italic",fontSize:"clamp(36px,5.5vw,72px)",lineHeight:1.08,letterSpacing:"-.01em",color:"#f7f5f0",marginBottom:18 }}>
                   {mode === "idea"
                     ? <>Generate your<br />next <span className="gold-text">billion-dollar</span><br />startup idea.</>
                     : <>Unlock deep<br /><span className="gold-text">financial clarity</span><br />in seconds.</>}
                 </h1>
 
-                <p style={{ fontFamily:"'JetBrains Mono',monospace",fontSize:11,lineHeight:2,color:"#4a4a55",maxWidth:360,marginBottom:0 }}>
+                {/* Subtitle */}
+                <p style={{ fontFamily:"'JetBrains Mono',monospace",fontSize:11,lineHeight:2,color:"#4a4a55",maxWidth:400,marginBottom:32 }}>
                   {mode === "idea"
-                    ? "Select a sector, describe a problem space, and let AI engineer your venture — complete with competitive intelligence and financial modelling."
-                    : "Enter a company or business concept. Receive a comprehensive financial briefing with projections, risks, and strategic recommendations."}
+                    ? "Describe a problem space. QWS-BIZ-4 generates a full venture brief — with SWOT, competitor intelligence, financial projections, and an AI advisor."
+                    : "Enter a company or concept. Receive institutional-grade analysis with risk scoring, revenue modelling, and strategic recommendations."}
                 </p>
+
+                {/* Textarea */}
+                <div style={{ width:"100%",maxWidth:640,marginBottom:18 }}>
+                  <div style={{ border:"1px solid rgba(200,169,110,.25)",background:"#141418",overflow:"hidden",transition:"border-color .2s" }}
+                    onFocus={e => (e.currentTarget.style.borderColor="rgba(200,169,110,.5)")}
+                    onBlur={e => (e.currentTarget.style.borderColor="rgba(200,169,110,.25)")}>
+                    <textarea
+                      value={prompt}
+                      onChange={e => setPrompt(e.target.value)}
+                      onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); if (prompt.trim()) generate(); } }}
+                      placeholder={mode === "idea"
+                        ? "e.g. A platform that helps small restaurants automate inventory and reduce food waste using AI…"
+                        : "e.g. Analyse the financial viability of a SaaS platform for enterprise HR automation in Southeast Asia…"}
+                      rows={4}
+                      style={{ width:"100%",background:"transparent",border:"none",color:"#f7f5f0",fontFamily:"'JetBrains Mono',monospace",fontSize:12,padding:"18px 20px",outline:"none",resize:"none",caretColor:G,lineHeight:1.8 }}
+                    />
+                    <div style={{ display:"flex",alignItems:"center",justifyContent:"space-between",padding:"11px 20px 13px",borderTop:"1px solid rgba(255,255,255,.05)" }}>
+                      <span style={{ fontFamily:"'JetBrains Mono',monospace",fontSize:9,color:"#252529" }}>Be specific — sector, problem, geography and scale</span>
+                      <button
+                        onClick={generate}
+                        disabled={!prompt.trim()}
+                        style={{ background:prompt.trim()?G:"transparent",color:prompt.trim()?"#0c0c0e":GD,border:`1px solid ${prompt.trim()?"transparent":"rgba(200,169,110,.2)"}`,fontFamily:"'JetBrains Mono',monospace",fontSize:10,fontWeight:700,letterSpacing:".15em",textTransform:"uppercase",padding:"9px 20px",cursor:prompt.trim()?"pointer":"not-allowed",transition:"all .15s" }}
+                        data-testid="biz-analyse-btn"
+                      >
+                        Analyse →
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Sector pills inline */}
+                <div style={{ display:"flex",flexWrap:"wrap",gap:5,justifyContent:"center",maxWidth:640,marginBottom:36 }}>
+                  {SECTORS.map(s => (
+                    <button key={s} className={`spill${sector===(s==="All"?"":s)?" active":""}`} onClick={() => setSector(s==="All"?"":s)} data-testid={`sector-${s}`}>
+                      {s}
+                    </button>
+                  ))}
+                </div>
+
+                {/* Feature cards */}
+                <div style={{ display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:1,background:"#252529",width:"100%",maxWidth:680 }}>
+                  {[
+                    { icon:"⬡", label:"SWOT Matrix",    desc:"Strengths, weaknesses, opportunities and threats analysis" },
+                    { icon:"◈", label:"Market Sizing",   desc:"TAM, revenue projections and 5-year growth trajectory" },
+                    { icon:"◇", label:"Competitors",     desc:"Rival intelligence with threat scores and differentiators" },
+                    { icon:"◎", label:"AI Advisor",      desc:"Live chat advisor for strategy, funding and risk guidance" },
+                  ].map(f => (
+                    <div key={f.label} style={{ background:"#0c0c0e",padding:"18px 16px",textAlign:"left" }}>
+                      <div style={{ fontSize:17,marginBottom:10,color:G }}>{f.icon}</div>
+                      <div style={{ fontFamily:"'JetBrains Mono',monospace",fontSize:8,letterSpacing:".2em",textTransform:"uppercase",fontWeight:700,marginBottom:7,color:"#f7f5f0" }}>{f.label}</div>
+                      <div style={{ fontFamily:"'JetBrains Mono',monospace",fontSize:9,color:"#4a4a55",lineHeight:1.7 }}>{f.desc}</div>
+                    </div>
+                  ))}
+                </div>
+
               </div>
             )}
 
@@ -505,8 +565,8 @@ export default function BusinessAnalysis() {
             )}
           </div>
 
-          {/* ── SECTOR PILLS ── */}
-          {page !== "generating" && (
+          {/* ── SECTOR PILLS ── (report only) */}
+          {page === "report" && (
             <div style={{ display:"flex",flexWrap:"wrap",gap:6,padding:"10px 28px 0",borderTop:"1px solid rgba(255,255,255,.04)",flexShrink:0 }}>
               {SECTORS.map(s => (
                 <button key={s} className={`spill${sector===(s==="All"?"":s)?" active":""}`} onClick={() => setSector(s==="All"?"":s)}>
@@ -516,8 +576,8 @@ export default function BusinessAnalysis() {
             </div>
           )}
 
-          {/* ── INPUT BAR ── */}
-          {page !== "generating" && (
+          {/* ── INPUT BAR ── (report only) */}
+          {page === "report" && (
             <div style={{ flexShrink:0,borderTop:"1px solid rgba(255,255,255,.07)",padding:"16px 28px 20px",background:"#0c0c0e",position:"relative",zIndex:10 }}>
               <div style={{ display:"flex",alignItems:"stretch",border:"1px solid rgba(255,255,255,.1)",background:"#141418",overflow:"hidden",transition:"border-color .2s" }}
                 onFocus={e => (e.currentTarget.style.borderColor="rgba(255,255,255,.22)")}

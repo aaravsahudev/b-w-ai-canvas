@@ -528,107 +528,137 @@ function delay(ms: number) {
 
 function SlideRenderer({ slide, theme: t }: { slide: SlideData; theme: Theme }) {
   return (
-    <div
-      style={{
-        width: "100%",
-        height: "100%",
-        background: t.dark,
-        color: t.text,
-        fontFamily: "'Space Grotesk', 'JetBrains Mono', monospace",
-        position: "relative",
-        overflow: "hidden",
-        display: "flex",
-        flexDirection: "column",
-      }}
-    >
-      {/* Accent bar */}
-      <div style={{ height: 3, background: `linear-gradient(90deg,${t.accent},${t.accent2},transparent)`, flexShrink: 0 }} />
+    <div style={{ width:"100%",height:"100%",background:t.dark,color:t.text,fontFamily:"'Space Grotesk','JetBrains Mono',monospace",position:"relative",overflow:"hidden",display:"flex",flexDirection:"column" }}>
 
-      {/* Left bar */}
-      <div style={{ position: "absolute", left: 0, top: 0, bottom: 0, width: 3, background: `linear-gradient(180deg,${t.accent},transparent)` }} />
+      {/* ─ Background decorations ─ */}
+      <div style={{ position:"absolute",right:"-8%",top:"-14%",width:"42%",aspectRatio:"1",borderRadius:"50%",border:`1px solid ${t.accent}12`,pointerEvents:"none" }} />
+      <div style={{ position:"absolute",right:"-3%",top:"-7%",width:"28%",aspectRatio:"1",borderRadius:"50%",border:`1px solid ${t.accent}07`,pointerEvents:"none" }} />
+      <div style={{ position:"absolute",right:"6%",bottom:"-6%",width:"18%",aspectRatio:"1",borderRadius:"50%",background:`radial-gradient(circle,${t.accent}14,transparent)`,filter:"blur(18px)",pointerEvents:"none" }} />
+      <div style={{ position:"absolute",left:0,bottom:0,width:"30%",height:"30%",background:`radial-gradient(circle at bottom left,${t.accent}06,transparent)`,pointerEvents:"none" }} />
 
-      <div style={{ flex: 1, padding: "5% 6% 5% 7%", display: "flex", flexDirection: "column", gap: "3%" }}>
+      {/* ─ Top accent line ─ */}
+      <div style={{ height:3,background:`linear-gradient(90deg,${t.accent},${t.accent2},transparent)`,flexShrink:0 }} />
 
-        {/* Title slide */}
+      {/* ─ Left bar ─ */}
+      <div style={{ position:"absolute",left:0,top:0,bottom:0,width:3,background:`linear-gradient(180deg,${t.accent},${t.accent}50,transparent)` }} />
+
+      <div style={{ flex:1,padding:"5% 6% 5% 7%",display:"flex",flexDirection:"column",gap:"3%",position:"relative",zIndex:1 }}>
+
+        {/* ── TITLE SLIDE ── */}
         {slide.type === "title" && (
           <>
-            <div style={{ fontSize: "clamp(12px,4vw,42px)", fontWeight: 800, lineHeight: 1.1, letterSpacing: "-0.02em", maxWidth: "70%", marginTop: "auto" }}>
-              {slide.title}
-            </div>
-            {slide.subtitle && (
-              <div style={{ fontSize: "clamp(8px,1.2vw,14px)", color: t.accent, fontWeight: 600, maxWidth: "60%", lineHeight: 1.5 }}>
-                {slide.subtitle}
+            {/* Decorative ring */}
+            <div style={{ position:"absolute",right:"4%",top:"8%",width:"28%",aspectRatio:"1",borderRadius:"50%",border:`1.5px solid ${t.accent}35` }}>
+              <div style={{ position:"absolute",inset:"15%",borderRadius:"50%",border:`1px solid ${t.accent}20` }}>
+                <div style={{ position:"absolute",inset:"35%",borderRadius:"50%",background:t.accent,boxShadow:`0 0 14px ${t.accent}` }} />
               </div>
-            )}
-            <div style={{ width: 40, height: 2, background: t.accent, marginTop: "2%" }} />
-            <div style={{ marginTop: "auto", marginBottom: "2%" }} />
+            </div>
+
+            <div style={{ marginTop:"auto" }}>
+              <div style={{ fontSize:"clamp(5px,1vw,11px)",letterSpacing:".35em",textTransform:"uppercase",color:t.accent,marginBottom:"2.5%",opacity:.75 }}>PRESENTATION</div>
+              <div style={{ fontSize:"clamp(14px,4.8vw,52px)",fontWeight:800,lineHeight:1.02,letterSpacing:"-0.025em",maxWidth:"65%",marginBottom:"2.5%" }}>
+                {slide.title}
+              </div>
+              {slide.subtitle && (
+                <div style={{ fontSize:"clamp(7px,1.2vw,14px)",color:t.accent,fontWeight:500,maxWidth:"55%",lineHeight:1.5,marginBottom:"3.5%",opacity:.9 }}>
+                  {slide.subtitle}
+                </div>
+              )}
+              <div style={{ display:"flex",alignItems:"center",gap:"2%" }}>
+                <div style={{ width:"9%",height:2,background:t.accent }} />
+                <div style={{ width:"5%",height:2,background:`${t.accent}45` }} />
+                <div style={{ width:"2.5%",height:2,background:`${t.accent}20` }} />
+              </div>
+            </div>
+            <div style={{ marginBottom:"2%" }} />
           </>
         )}
 
-        {/* Regular slides */}
+        {/* ── REGULAR SLIDES ── */}
         {slide.type !== "title" && (
           <>
-            <div style={{ fontSize: "clamp(9px,2.2vw,22px)", fontWeight: 700, lineHeight: 1.2, letterSpacing: "-0.01em" }}>
-              {slide.title}
+            {/* Heading with accent bar */}
+            <div style={{ display:"flex",alignItems:"flex-start",gap:"2.5%",marginBottom:"0.5%" }}>
+              <div style={{ width:3,minHeight:"clamp(18px,2.6vw,30px)",background:`linear-gradient(180deg,${t.accent},${t.accent}60)`,flexShrink:0,marginTop:"0.3%",borderRadius:2 }} />
+              <div style={{ fontSize:"clamp(9px,2.3vw,25px)",fontWeight:700,lineHeight:1.12,letterSpacing:"-0.015em" }}>
+                {slide.title}
+              </div>
             </div>
 
+            {/* STATS */}
             {slide.stats && (
-              <div style={{ display: "flex", gap: "4%", flex: 1, alignItems: "center" }}>
+              <div style={{ display:"flex",gap:"3%",flex:1,alignItems:"center" }}>
                 {slide.stats.map((s, i) => (
-                  <div key={i} style={{ flex: 1, border: `1px solid ${t.accent}30`, padding: "4%", textAlign: "center" }}>
-                    <div style={{ fontSize: "clamp(12px,3vw,32px)", fontWeight: 800, color: t.accent }}>{s.value}</div>
-                    <div style={{ fontSize: "clamp(6px,0.9vw,10px)", color: t.text, opacity: 0.6, marginTop: "6%" }}>{s.label}</div>
+                  <div key={i} style={{ flex:1,background:`${t.accent}08`,border:`1px solid ${t.accent}22`,padding:"5%",textAlign:"center",position:"relative",overflow:"hidden" }}>
+                    <div style={{ position:"absolute",top:0,left:0,right:0,height:2,background:`linear-gradient(90deg,transparent,${t.accent},transparent)` }} />
+                    <div style={{ position:"absolute",bottom:0,left:0,right:0,height:1,background:`${t.accent}15` }} />
+                    <div style={{ fontSize:"clamp(13px,3.3vw,38px)",fontWeight:800,color:t.accent,lineHeight:1,marginBottom:"5%" }}>{s.value}</div>
+                    <div style={{ fontSize:"clamp(5px,0.85vw,9px)",color:t.text,opacity:.5,textTransform:"uppercase",letterSpacing:".12em" }}>{s.label}</div>
                   </div>
                 ))}
               </div>
             )}
 
+            {/* CHART */}
             {slide.chart && (
-              <div style={{ flex: 1, display: "flex", flexDirection: "column" }}>
-                <div style={{ fontSize: "clamp(6px,0.8vw,9px)", color: t.accent, letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: "2%" }}>
+              <div style={{ flex:1,display:"flex",flexDirection:"column" }}>
+                <div style={{ fontSize:"clamp(5px,0.75vw,8px)",color:t.accent,letterSpacing:".18em",textTransform:"uppercase",marginBottom:"2%",display:"flex",alignItems:"center",gap:"2%" }}>
+                  <div style={{ width:"2.5%",height:1,background:t.accent,opacity:.6 }} />
                   {slide.chart.title}
                 </div>
-                <div style={{ flex: 1, display: "flex", alignItems: "flex-end", gap: "1.5%" }}>
+                <div style={{ flex:1,display:"flex",alignItems:"flex-end",gap:"1.5%",paddingBottom:"1%" }}>
                   {slide.chart.values.map((v, i) => (
-                    <div key={i} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: "3%", height: "100%" }}>
-                      <div style={{ flex: 1, display: "flex", alignItems: "flex-end", width: "100%" }}>
-                        <div style={{ width: "100%", height: `${v}%`, background: `linear-gradient(0deg,${t.accent},${t.accent2})`, borderRadius: "2px 2px 0 0" }} />
+                    <div key={i} style={{ flex:1,display:"flex",flexDirection:"column",alignItems:"center",gap:"4%",height:"100%" }}>
+                      <div style={{ flex:1,display:"flex",alignItems:"flex-end",width:"100%",position:"relative" }}>
+                        <div style={{ width:"100%",height:`${v}%`,background:`linear-gradient(0deg,${t.accent},${t.accent2})`,borderRadius:"2px 2px 0 0",position:"relative",overflow:"visible" }}>
+                          <div style={{ position:"absolute",top:"-120%",left:"50%",transform:"translateX(-50%)",fontSize:"clamp(4px,0.62vw,7px)",color:t.accent,fontWeight:700,whiteSpace:"nowrap" }}>{v}%</div>
+                        </div>
                       </div>
-                      <div style={{ fontSize: "clamp(5px,0.6vw,7px)", color: t.text, opacity: 0.5, whiteSpace: "nowrap" }}>{slide.chart!.labels[i]}</div>
+                      <div style={{ fontSize:"clamp(4px,0.55vw,6px)",color:t.text,opacity:.45,whiteSpace:"nowrap" }}>{slide.chart!.labels[i]}</div>
                     </div>
                   ))}
                 </div>
+                {/* Chart baseline */}
+                <div style={{ height:1,background:`${t.text}15` }} />
               </div>
             )}
 
+            {/* PERFORMANCE */}
             {slide.performance && (
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "3%", flex: 1 }}>
+              <div style={{ display:"grid",gridTemplateColumns:"1fr 1fr",gap:"2.5%",flex:1 }}>
                 {slide.performance.map((p, i) => (
-                  <div key={i} style={{ border: `1px solid ${t.accent}20`, padding: "4%", display: "flex", flexDirection: "column", justifyContent: "center" }}>
-                    <div style={{ fontSize: "clamp(5px,0.8vw,9px)", color: t.text, opacity: 0.5, marginBottom: "4%" }}>{p.label}</div>
-                    <div style={{ fontSize: "clamp(10px,2.5vw,26px)", fontWeight: 800, color: t.accent }}>{p.value}{p.unit}</div>
-                    <div style={{ marginTop: "6%", height: 3, background: `${t.accent}20`, position: "relative" }}>
-                      <div style={{ position: "absolute", left: 0, top: 0, height: "100%", width: `${p.value}%`, background: t.accent, transition: "width 0.6s ease" }} />
+                  <div key={i} style={{ border:`1px solid ${t.accent}18`,background:`${t.accent}06`,padding:"4%",display:"flex",flexDirection:"column",justifyContent:"center",position:"relative",overflow:"hidden" }}>
+                    <div style={{ position:"absolute",top:0,left:0,right:0,height:2,background:`linear-gradient(90deg,${t.accent},transparent)` }} />
+                    <div style={{ fontSize:"clamp(4px,0.75vw,8px)",color:t.text,opacity:.45,marginBottom:"3%",textTransform:"uppercase",letterSpacing:".1em" }}>{p.label}</div>
+                    <div style={{ fontSize:"clamp(12px,2.9vw,32px)",fontWeight:800,color:t.accent,marginBottom:"5%",lineHeight:1 }}>
+                      {p.value}<span style={{ fontSize:"clamp(6px,1vw,11px)",opacity:.6 }}>{p.unit}</span>
+                    </div>
+                    <div style={{ height:2,background:`${t.accent}18`,borderRadius:1,overflow:"hidden" }}>
+                      <div style={{ height:"100%",width:`${p.value}%`,background:`linear-gradient(90deg,${t.accent},${t.accent2})` }} />
                     </div>
                   </div>
                 ))}
               </div>
             )}
 
+            {/* QUOTE */}
             {slide.type === "quote" && slide.body[0] && (
-              <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", textAlign: "center", padding: "4%" }}>
-                <div style={{ fontSize: "clamp(8px,1.6vw,18px)", fontStyle: "italic", opacity: 0.9, lineHeight: 1.6, maxWidth: "80%" }}>
+              <div style={{ flex:1,display:"flex",alignItems:"center",justifyContent:"center",textAlign:"center",padding:"6%",position:"relative" }}>
+                <div style={{ fontSize:"clamp(50px,9vw,90px)",color:t.accent,opacity:.12,position:"absolute",top:"2%",left:"4%",fontFamily:"Georgia,serif",lineHeight:1 }}>"</div>
+                <div style={{ fontSize:"clamp(50px,9vw,90px)",color:t.accent,opacity:.12,position:"absolute",bottom:"2%",right:"4%",fontFamily:"Georgia,serif",lineHeight:1,transform:"rotate(180deg)" }}>"</div>
+                <div style={{ fontSize:"clamp(9px,1.75vw,19px)",fontStyle:"italic",opacity:.88,lineHeight:1.68,maxWidth:"82%",position:"relative",zIndex:1 }}>
                   {slide.body[0]}
                 </div>
               </div>
             )}
 
+            {/* BODY BULLETS */}
             {slide.type !== "quote" && !slide.stats && !slide.chart && !slide.performance && slide.body.length > 0 && (
-              <div style={{ display: "flex", flexDirection: "column", gap: "2.5%", flex: 1 }}>
+              <div style={{ display:"flex",flexDirection:"column",gap:"2%",flex:1 }}>
                 {slide.body.map((line, i) => (
-                  <div key={i} style={{ display: "flex", gap: "2%", alignItems: "flex-start" }}>
-                    <div style={{ width: 4, height: 4, borderRadius: "50%", background: t.accent, flexShrink: 0, marginTop: "0.6%" }} />
-                    <div style={{ fontSize: "clamp(6px,1vw,11px)", opacity: 0.85, lineHeight: 1.6 }}>{line}</div>
+                  <div key={i} style={{ display:"flex",gap:"2%",alignItems:"flex-start",padding:"1.5% 2%",background:i%2===0?`${t.accent}06`:"transparent",borderLeft:i%2===0?`2px solid ${t.accent}35`:"2px solid transparent" }}>
+                    <div style={{ width:5,height:5,borderRadius:"50%",background:i===0?t.accent:`${t.accent}55`,flexShrink:0,marginTop:"0.4%",boxShadow:i===0?`0 0 7px ${t.accent}`:"none" }} />
+                    <div style={{ fontSize:"clamp(6px,1.02vw,11.5px)",opacity:.86,lineHeight:1.62 }}>{line}</div>
                   </div>
                 ))}
               </div>
@@ -637,9 +667,10 @@ function SlideRenderer({ slide, theme: t }: { slide: SlideData; theme: Theme }) 
         )}
       </div>
 
-      {/* Slide number */}
-      <div style={{ position: "absolute", bottom: "3%", right: "4%", fontSize: "clamp(5px,0.7vw,8px)", color: t.text, opacity: 0.2, fontFamily: "monospace" }}>
-        QWS-PPT-1
+      {/* ─ Bottom branding strip ─ */}
+      <div style={{ height:16,background:`${t.accent}07`,borderTop:`1px solid ${t.accent}18`,display:"flex",alignItems:"center",padding:"0 7%",flexShrink:0 }}>
+        <div style={{ flex:1,height:1,background:`linear-gradient(90deg,${t.accent}30,transparent)` }} />
+        <div style={{ fontSize:"clamp(4px,0.58vw,6.5px)",color:t.accent,opacity:.4,fontFamily:"monospace",letterSpacing:".25em",paddingLeft:"3%" }}>QWS-PPT-1</div>
       </div>
     </div>
   );
